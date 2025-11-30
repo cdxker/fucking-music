@@ -32,7 +32,7 @@ function PlaylistView({ playlist }: { playlist: Playlist }) {
 function PlayerView() {
   const Fetish: Playlist = {
     id: "play-f",
-    track_cover_uri: "../public/covers__fetish.png",
+    track_cover_uri: "/covers__fetish.png",
     artists: ["Oblique Occasions"],
     first_track: "track-i-dream",
   };
