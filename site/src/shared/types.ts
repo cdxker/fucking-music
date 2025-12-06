@@ -16,7 +16,7 @@ export interface Track {
   name: string;
   artists: string[];
   tags?: string[];
-  stream_url?: string;
+  stream_url: string;
   next_tracks?: Record<PlaylistId, TrackId>;
 }
 

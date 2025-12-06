@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import * as Slider from "@radix-ui/react-slider";
+import type { Playlist, Track } from "@/shared/types";
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -18,11 +19,82 @@ function PlayerView({
 }) {
 
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [currentTimeMs, setCurrentTimeMs] = useState(180000); // 3:00 as shown in design
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentTrack = tracks[currentTrackIndex];
   const totalDuration = currentTrack.time_ms;
-  const progress = (currentTimeMs / totalDuration) * 100;
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    const audio = audioRef.current;
+
+    audio.src = currentTrack.stream_url;
+    audio.load();
+    setCurrentTimeMs(0);
+
+    if (isPlaying) {
+      audio.play();
+    }
+
+    return () => {
+      audio.pause();
+    };
+  }, [currentTrack.stream_url]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTimeMs(audio.currentTime * 1000);
+    };
+
+    const handleEnded = () => {
+      if (currentTrackIndex < tracks.length - 1) {
+        setCurrentTrackIndex(currentTrackIndex + 1);
+      } else {
+        setIsPlaying(false);
+      }
+    };
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [currentTrackIndex, tracks.length]);
+
+  const togglePlayPause = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (value: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.currentTime = value / 1000;
+    setCurrentTimeMs(value);
+  };
+
+  const handleTrackSelect = (index: number) => {
+    setCurrentTrackIndex(index);
+    setCurrentTimeMs(0);
+    setIsPlaying(true);
+  };
 
   const remainingMs = useMemo(() => {
     const remainingInCurrentTrack = currentTrack.time_ms - currentTimeMs;
@@ -58,12 +130,20 @@ function PlayerView({
         </div>
       </div>
 
-      <div className="mt-2">
+      <div className="mt-2 relative">
         <img
           src={playlist.track_cover_uri}
           alt={`${playlist.name} album cover`}
           className="w-full aspect-square object-cover"
         />
+        <button
+          onClick={togglePlayPause}
+          className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
+        >
+          <span className="text-white text-6xl">
+            {isPlaying ? "⏸" : "▶"}
+          </span>
+        </button>
       </div>
 
       <div className="mt-4">
@@ -72,7 +152,7 @@ function PlayerView({
           value={[currentTimeMs]}
           max={totalDuration}
           step={1000}
-          onValueChange={([value]) => setCurrentTimeMs(value)}
+          onValueChange={([value]) => handleSeek(value)}
         >
           <Slider.Track className="bg-[#6B8CC7] relative grow rounded-full h-2">
             <Slider.Range className="absolute bg-[#3B5998] rounded-full h-full" />
@@ -91,10 +171,7 @@ function PlayerView({
           <div
             key={track.id}
             className="flex items-center justify-between text-white/70 cursor-pointer hover:text-white/90 transition-colors"
-            onClick={() => {
-              setCurrentTrackIndex(index);
-              setCurrentTimeMs(0);
-            }}
+            onClick={() => handleTrackSelect(index)}
           >
             <div className="flex items-center gap-3">
               {index === currentTrackIndex && (
