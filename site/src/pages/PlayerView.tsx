@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import * as Slider from "@radix-ui/react-slider";
 
 type PlaylistId = `play-${string}`;
 
@@ -134,7 +135,6 @@ function PlayerView() {
   const totalDuration = currentTrack.time_ms;
   const progress = (currentTimeMs / totalDuration) * 100;
 
-  // Calculate remaining time for entire playlist from current position
   const remainingMs = useMemo(() => {
     const remainingInCurrentTrack = currentTrack.time_ms - currentTimeMs;
     const remainingTracks = Tracks.slice(currentTrackIndex + 1);
@@ -149,18 +149,15 @@ function PlayerView() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header Navigation */}
       <div className="flex justify-between items-center">
         <span className="text-4xl text-white/50 tracking-tight">less</span>
         <span className="text-4xl text-white/50 tracking-tight">more?</span>
       </div>
 
-      {/* Title */}
       <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight mt-2">
         fucking music
       </h1>
 
-      {/* Track Info */}
       <div className="mt-4 space-y-1">
         <div className="flex gap-4 text-white/90 text-base">
           <span>{Anathema.name}</span>
@@ -172,7 +169,6 @@ function PlayerView() {
         </div>
       </div>
 
-      {/* Album Cover */}
       <div className="mt-2">
         <img
           src={Anathema.track_cover_uri}
@@ -181,34 +177,26 @@ function PlayerView() {
         />
       </div>
 
-      {/* Progress Bar */}
       <div className="mt-4">
-        <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
-          {/* Played portion - blue */}
-          <div
-            className="absolute left-0 top-0 h-full bg-[#3B5998] rounded-l-full"
-            style={{ width: `${progress}%` }}
-          />
-          {/* Current position indicator - coral/red */}
-          <div
-            className="absolute top-0 h-full w-2 bg-[#E85A4F] rounded-full"
-            style={{ left: `calc(${progress}% - 4px)` }}
-          />
-          {/* Remaining portion - lighter */}
-          <div
-            className="absolute right-0 top-0 h-full bg-[#6B8CC7]"
-            style={{ width: `${100 - progress}%` }}
-          />
-        </div>
+        <Slider.Root
+          className="relative flex items-center select-none touch-none w-full h-5"
+          value={[currentTimeMs]}
+          max={totalDuration}
+          step={1000}
+          onValueChange={([value]) => setCurrentTimeMs(value)}
+        >
+          <Slider.Track className="bg-[#6B8CC7] relative grow rounded-full h-2">
+            <Slider.Range className="absolute bg-[#3B5998] rounded-full h-full" />
+          </Slider.Track>
+          <Slider.Thumb className="block w-3 h-3 bg-[#E85A4F] rounded-full focus:outline-none" />
+        </Slider.Root>
 
-        {/* Time stamps */}
         <div className="flex justify-between mt-2 text-white/70 text-sm">
           <span>{formatTime(currentTimeMs)}</span>
           <span>{formatTime(totalDuration)}</span>
         </div>
       </div>
 
-      {/* Track List */}
       <div className="mt-4 space-y-3">
         {Tracks.map((track, index) => (
           <div
