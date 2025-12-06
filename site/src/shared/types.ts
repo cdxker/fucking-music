@@ -1,6 +1,6 @@
-type PlaylistId = `play-${string}`;
+export type PlaylistId = `play-${string}`;
 
-interface Playlist {
+export interface Playlist {
   id: PlaylistId;
   track_cover_uri: string;
   name: string;
@@ -8,14 +8,15 @@ interface Playlist {
   first_track: Track;
 }
 
-type TrackId = `track-${string}`;
+export type TrackId = `track-${string}`;
 
-interface Track {
+export interface Track {
   id: TrackId;
   time_ms: number;
   name: string;
   artists: string[];
   tags?: string[];
+  stream_url?: string;
   next_tracks?: Record<PlaylistId, TrackId>;
 }
 
