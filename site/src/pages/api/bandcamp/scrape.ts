@@ -155,7 +155,7 @@ function transformToPlaylist(
         name: trackInfo.title,
         artists: [trackInfo.artist || artist],
         tags: keywords.length > 0 ? keywords : undefined,
-        stream_url: streamUrl,
+        stream_url: streamUrl ?? '',
       };
     });
 
