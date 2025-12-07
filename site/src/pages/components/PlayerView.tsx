@@ -109,7 +109,9 @@ function PlayerView({
   const remainingMinutes = Math.floor(remainingMs / 60000);
 
   return (
-    <div className="max-w-2xl flex flex-col gap-4 justify-center">
+    <div className="flex flex-col gap-4 justify-center items-center">
+      <div className="max-w-2xl">
+
       <div className="flex justify-between items-center">
         <span className="text-4xl text-white/50 tracking-tight">less</span>
         <span className="text-4xl text-white/50 tracking-tight">more?</span>
@@ -186,6 +188,7 @@ function PlayerView({
             <span className="text-sm">{formatTime(track.time_ms)}</span>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
