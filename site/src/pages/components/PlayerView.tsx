@@ -112,10 +112,11 @@ function PlayerView({
     <div className="flex flex-col gap-4 justify-center items-center">
       <div className="max-w-2xl">
 
+        {/*
       <div className="flex justify-between items-center">
         <span className="text-4xl text-white/50 tracking-tight">less</span>
         <span className="text-4xl text-white/50 tracking-tight">more?</span>
-      </div>
+      </div> */}
 
       <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight mt-2">
         fucking music
