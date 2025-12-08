@@ -1,74 +1,7 @@
 import type { APIRoute } from "astro";
 import type { Playlist, PlaylistId, Track, TrackId } from "../../../shared/types";
 
-interface PlaylistWithTracks extends Playlist {
-  tracks: Track[];
-}
-
-interface BandcampTrackInfo {
-  track_num: number;
-  title: string;
-  title_link: string;
-  duration: number;
-  artist: string | null;
-  file?: { "mp3-128"?: string };
-  track_id?: number;
-}
-
-interface BandcampPageData {
-  artist: string;
-  trackinfo: BandcampTrackInfo[];
-  url: string;
-  current?: {
-    title: string;
-    release_date?: string;
-    selling_band_id?: number;
-  };
-  album_release_date?: string;
-  keywords?: string[];
-}
-
-const USER_AGENT = "bandcamp-scraper/1.0 (TypeScript)";
-
-async function fetchBandcampPage(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": USER_AGENT,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
-  }
-
-  return response.text();
-}
-
-function extractPageData(html: string): BandcampPageData | null {
-  // Extract data-blob from #pagedata div (like BandcampJSON.get_pagedata)
-  const pagedataMatch = html.match(/id="pagedata"[^>]*data-blob="([^"]*)"/);
-  if (!pagedataMatch) {
-    return null;
-  }
-
-  // Decode HTML entities in the data-blob
-  const dataBlob = pagedataMatch[1]
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#39;/g, "'");
-
-  try {
-    return JSON.parse(dataBlob);
-  } catch (e) {
-    console.error("Failed to parse pagedata:", e);
-    return null;
-  }
-}
-
 function extractLdJson(html: string): Record<string, any> | null {
-  // Extract JSON-LD data (like BandcampJSON.get_js)
   const ldJsonMatch = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/);
   if (!ldJsonMatch) {
     return null;
@@ -83,7 +16,6 @@ function extractLdJson(html: string): Record<string, any> | null {
 }
 
 function extractTralbumData(html: string): Record<string, any> | null {
-  // Extract data-tralbum from script tags
   const tralbumMatch = html.match(/data-tralbum="([^"]*)"/);
   if (!tralbumMatch) {
     return null;
@@ -189,7 +121,6 @@ export const GET: APIRoute = async ({ url }) => {
     );
   }
 
-  // Validate it's a Bandcamp URL
   if (!bandcampUrl.includes("bandcamp.com")) {
     return new Response(
       JSON.stringify({ error: "URL must be a Bandcamp URL" }),
@@ -201,9 +132,12 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   try {
-    const html = await fetchBandcampPage(bandcampUrl);
+    const response = await fetch(bandcampUrl, {});
+    if (!response.ok) {
+      throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
+    }
+    const html = await response.text();
 
-    // Try tralbum data first (has track info with streaming URLs)
     const tralbumData = extractTralbumData(html);
     if (!tralbumData || !tralbumData.trackinfo) {
       return new Response(
@@ -246,75 +180,3 @@ export const GET: APIRoute = async ({ url }) => {
     );
   }
 };
-
-export const POST: APIRoute = async ({ request }) => {
-  try {
-    const body = await request.json();
-    const bandcampUrl = body.url;
-
-    if (!bandcampUrl) {
-      return new Response(
-        JSON.stringify({ error: "Missing 'url' in request body" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Validate it's a Bandcamp URL
-    if (!bandcampUrl.includes("bandcamp.com")) {
-      return new Response(
-        JSON.stringify({ error: "URL must be a Bandcamp URL" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const html = await fetchBandcampPage(bandcampUrl);
-
-    const tralbumData = extractTralbumData(html);
-    if (!tralbumData || !tralbumData.trackinfo) {
-      return new Response(
-        JSON.stringify({ error: "Could not extract track data from Bandcamp page" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const ldJson = extractLdJson(html);
-    const albumArt = extractAlbumArt(html);
-
-    const pageData: BandcampPageData = {
-      artist: tralbumData.artist || tralbumData.current?.artist || "Unknown Artist",
-      trackinfo: tralbumData.trackinfo,
-      url: tralbumData.url || bandcampUrl,
-      current: tralbumData.current,
-      keywords: [],
-    };
-
-    const playlist = transformToPlaylist(pageData, ldJson, albumArt);
-
-    return new Response(JSON.stringify(playlist, null, 2), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Error scraping Bandcamp:", error);
-    return new Response(
-      JSON.stringify({
-        error: "Failed to scrape Bandcamp page",
-        details: error instanceof Error ? error.message : String(error)
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
-};
-

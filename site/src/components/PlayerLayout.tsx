@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import PlayerView from "./PlayerView";
 import { useState } from "react";
-import type { Playlist, Track } from "../shared/types";
+import type { FuckingPlaylist, FuckingTrack } from "../shared/types";
 
-interface PlaylistWithTracks extends Playlist {
-  tracks: Track[];
+interface PlaylistWithTracks extends FuckingPlaylist {
+  tracks: FuckingTrack[];
 }
 
 export default function PlayerLayout() {
@@ -12,28 +12,20 @@ export default function PlayerLayout() {
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
 
     setLoading(true);
-    setError(null);
 
     try {
       const res = await fetch(`/api/bandcamp/scrape?url=${encodeURIComponent(inputValue)}`);
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || "Failed to load playlist");
-        return;
-      }
-
       setPlaylist(data);
       setShowInput(false);
       setInputValue("");
     } catch (e) {
-      setError("Failed to fetch playlist");
     } finally {
       setLoading(false);
     }
@@ -77,7 +69,6 @@ export default function PlayerLayout() {
                   onClick={() => {
                     setShowInput(false);
                     setInputValue("");
-                    setError(null);
                   }}
                 >
                   Cancel
@@ -91,9 +82,6 @@ export default function PlayerLayout() {
                   {loading ? "Loading..." : "Load"}
                 </Button>
               </div>
-              {error && (
-                <p className="text-red-500 text-sm text-center">{error}</p>
-              )}
             </div>
           )}
         </div>
