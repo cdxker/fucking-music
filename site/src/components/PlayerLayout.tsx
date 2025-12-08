@@ -1,17 +1,52 @@
 import { Button } from "@/components/ui/button";
 import PlayerView from "./PlayerView";
-import { useState } from "react";
-import type { FuckingPlaylist, FuckingTrack } from "../shared/types";
-
-interface PlaylistWithTracks extends FuckingPlaylist {
-  tracks: FuckingTrack[];
-}
+import { useState, useEffect, useRef } from "react";
+import type { FuckingPlaylistWithTracks, TrackId } from "../shared/types";
+import { db } from "@/lib/store";
 
 export default function PlayerLayout() {
-  const [playlist, setPlaylist] = useState<PlaylistWithTracks | null>(null);
+  const [playlist, setPlaylist] = useState<FuckingPlaylistWithTracks | null>(null);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [initialTrackIndex, setInitialTrackIndex] = useState(0);
+  const [initialTimeMs, setInitialTimeMs] = useState(0);
+  const tracksRef = useRef<FuckingPlaylistWithTracks["tracks"]>([]);
+
+  // Initialize store and load last playlist on mount
+  useEffect(() => {
+    const init = async () => {
+      await db.init();
+      const lastPlaylistId = db.getLastPlaylistId();
+      if (lastPlaylistId) {
+        const savedPlaylist = db.getPlaylistWithTracks(lastPlaylistId);
+        if (savedPlaylist) {
+          tracksRef.current = savedPlaylist.tracks;
+          const playerState = db.getPlayerState();
+          if (playerState.activeTrack) {
+            const trackIndex = savedPlaylist.tracks.findIndex(t => t.id === playerState.activeTrack);
+            if (trackIndex !== -1) {
+              setInitialTrackIndex(trackIndex);
+            }
+          }
+          if (playerState.trackTimestamp !== undefined) {
+            setInitialTimeMs(playerState.trackTimestamp);
+          }
+          setPlaylist(savedPlaylist);
+        }
+      }
+      setInitializing(false);
+    };
+    init();
+  }, []);
+
+  const handleStateChange = (trackIndex: number, timeMs: number) => {
+    const trackId = tracksRef.current[trackIndex]?.id;
+    if (trackId) {
+      db.setPlayerState({ activeTrack: trackId, trackTimestamp: timeMs });
+    }
+  };
 
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
@@ -20,8 +55,15 @@ export default function PlayerLayout() {
 
     try {
       const res = await fetch(`/api/bandcamp/scrape?url=${encodeURIComponent(inputValue)}`);
-      const data = await res.json();
+      const data: FuckingPlaylistWithTracks = await res.json();
 
+      // Save to local store
+      db.insertPlaylistWithTracks(data);
+      db.setPlayerState({ activeTrack: data.tracks[0]?.id, trackTimestamp: 0 });
+
+      tracksRef.current = data.tracks;
+      setInitialTrackIndex(0);
+      setInitialTimeMs(0);
       setPlaylist(data);
       setShowInput(false);
       setInputValue("");
@@ -31,16 +73,36 @@ export default function PlayerLayout() {
     }
   };
 
+  // Show nothing while initializing to prevent flash
+  if (initializing) {
+    return <div className="min-h-screen bg-[#0B0B0B]" />;
+  }
+
   return (
     <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-      {playlist && (
-        <PlayerView
-          playlist={playlist}
-          tracks={playlist.tracks}
-        />
+      {playlist && !showInput && (
+        <>
+          <PlayerView
+            playlist={playlist}
+            tracks={playlist.tracks}
+            initialTrackIndex={initialTrackIndex}
+            initialTimeMs={initialTimeMs}
+            onStateChange={handleStateChange}
+          />
+          <div className="flex justify-center mt-8">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-white/50"
+              onClick={() => setShowInput(true)}
+            >
+              Add Music
+            </Button>
+          </div>
+        </>
       )}
 
-      {!playlist && (
+      {(!playlist || showInput) && (
         <div className="w-full h-screen flex justify-center items-center">
           {!showInput ? (
             <Button

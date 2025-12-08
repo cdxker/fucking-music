@@ -49,8 +49,7 @@ export interface FuckingTrack {
 }
 
 export interface PlayerState {
-  activePlaylist: PlaylistId;
-  activeTrack: TrackId;
-
-  trackTimestamp: number;
+  activePlaylist?: PlaylistId;
+  activeTrack?: TrackId;
+  trackTimestamp?: number;
 }

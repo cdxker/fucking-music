@@ -12,16 +12,21 @@ function formatTime(ms: number): string {
 function PlayerView({
   playlist,
   tracks,
-}
-  : {
-  playlist: FuckingPlaylist,
-  tracks: FuckingTrack[]
+  initialTrackIndex = 0,
+  initialTimeMs = 0,
+  onStateChange,
+}: {
+  playlist: FuckingPlaylist;
+  tracks: FuckingTrack[];
+  initialTrackIndex?: number;
+  initialTimeMs?: number;
+  onStateChange?: (trackIndex: number, timeMs: number) => void;
 }) {
-
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex);
+  const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const initialSeekDone = useRef(false);
 
   const currentTrack = tracks[currentTrackIndex];
   const totalDuration = currentTrack.time_ms;
@@ -34,7 +39,22 @@ function PlayerView({
 
     audio.src = currentTrack.stream_url;
     audio.load();
-    setCurrentTimeMs(0);
+
+    // Seek to initial position on first load
+    const handleCanPlay = () => {
+      if (!initialSeekDone.current && initialTimeMs > 0 && currentTrackIndex === initialTrackIndex) {
+        audio.currentTime = initialTimeMs / 1000;
+        setCurrentTimeMs(initialTimeMs);
+        initialSeekDone.current = true;
+      }
+      audio.removeEventListener("canplay", handleCanPlay);
+    };
+
+    if (!initialSeekDone.current && currentTrackIndex === initialTrackIndex) {
+      audio.addEventListener("canplay", handleCanPlay);
+    } else {
+      setCurrentTimeMs(0);
+    }
 
     if (isPlaying) {
       audio.play();
@@ -42,6 +62,7 @@ function PlayerView({
 
     return () => {
       audio.pause();
+      audio.removeEventListener("canplay", handleCanPlay);
     };
   }, [currentTrack.stream_url]);
 
@@ -69,6 +90,29 @@ function PlayerView({
       audio.removeEventListener("ended", handleEnded);
     };
   }, [currentTrackIndex, tracks.length]);
+
+  // Save state periodically (every 5 seconds)
+  useEffect(() => {
+    if (!onStateChange) return;
+
+    const interval = setInterval(() => {
+      onStateChange(currentTrackIndex, currentTimeMs);
+    }, 5000);
+
+    // Also save on track change
+    onStateChange(currentTrackIndex, currentTimeMs);
+
+    return () => clearInterval(interval);
+  }, [currentTrackIndex, onStateChange]);
+
+  // Save state on unmount
+  useEffect(() => {
+    return () => {
+      if (onStateChange) {
+        onStateChange(currentTrackIndex, currentTimeMs);
+      }
+    };
+  }, []);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;
