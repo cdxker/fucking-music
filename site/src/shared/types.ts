@@ -10,10 +10,6 @@ export interface FuckingPlaylist {
 
 export type TrackId = `track-${string}`;
 
-export interface FuckingPlaylistWithTracks extends FuckingPlaylist {
-  tracks: FuckingTrack[];
-}
-
 export interface BandcampTrackInfo {
   track_num: number;
   title: string;
@@ -49,7 +45,8 @@ export interface FuckingTrack {
 }
 
 export interface PlayerState {
-  activePlaylist?: PlaylistId;
-  activeTrack?: TrackId;
-  trackTimestamp?: number;
+  activePlaylist: PlaylistId;
+  activeTrack: TrackId;
+  trackTimestamp: number;
+  lastPlaylistId: PlaylistId;
 }

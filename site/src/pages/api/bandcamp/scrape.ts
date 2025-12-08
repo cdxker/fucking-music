@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import type { BandcampPageData, PlaylistId, FuckingPlaylistWithTracks as FuckingPlaylistWithTracks, FuckingTrack, TrackId } from "../../../shared/types";
+import type { BandcampPageData, PlaylistId, FuckingPlaylist, FuckingTrack, TrackId } from "../../../shared/types";
 
 function extractBandcampData(
   html: string,
@@ -68,7 +68,7 @@ function extractBandcampData(
 
 function transformBandcampToFuckingPlaylist(
   pageData: BandcampPageData,
-): FuckingPlaylistWithTracks {
+): { playlist: FuckingPlaylist; tracks: FuckingTrack[] } {
   const albumTitle = pageData.current?.title || pageData.trackinfo[0]?.title || "Unknown Album";
   const artist = pageData.artist || "Unknown Artist";
   const keywords = pageData.keywords || [];
@@ -107,14 +107,15 @@ function transformBandcampToFuckingPlaylist(
     };
   }
 
-  return {
+  const playlist: FuckingPlaylist = {
     id: playlistId,
     track_cover_uri: pageData.albumArt || "",
     name: albumTitle,
     artists: [artist],
     first_track: tracks[0],
-    tracks,
   };
+
+  return { playlist, tracks };
 }
 
 export const GET: APIRoute = async ({ url }) => {
@@ -158,9 +159,9 @@ export const GET: APIRoute = async ({ url }) => {
       );
     }
 
-    const playlist = transformBandcampToFuckingPlaylist(extracted.pageData);
+    const result = transformBandcampToFuckingPlaylist(extracted.pageData);
 
-    return new Response(JSON.stringify(playlist, null, 2), {
+    return new Response(JSON.stringify(result, null, 2), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

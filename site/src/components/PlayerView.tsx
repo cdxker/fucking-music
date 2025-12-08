@@ -27,6 +27,8 @@ function PlayerView({
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const initialSeekDone = useRef(false);
+  const currentTimeMsRef = useRef(initialTimeMs);
+  const currentTrackIndexRef = useRef(initialTrackIndex);
 
   const currentTrack = tracks[currentTrackIndex];
   const totalDuration = currentTrack.time_ms;
@@ -40,19 +42,14 @@ function PlayerView({
     audio.src = currentTrack.stream_url;
     audio.load();
 
-    // Seek to initial position on first load
-    const handleCanPlay = () => {
-      if (!initialSeekDone.current && initialTimeMs > 0 && currentTrackIndex === initialTrackIndex) {
+    if (!initialSeekDone.current && currentTrackIndex === initialTrackIndex && initialTimeMs > 0) {
+      const handleLoadedMetadata = () => {
         audio.currentTime = initialTimeMs / 1000;
         setCurrentTimeMs(initialTimeMs);
         initialSeekDone.current = true;
-      }
-      audio.removeEventListener("canplay", handleCanPlay);
-    };
-
-    if (!initialSeekDone.current && currentTrackIndex === initialTrackIndex) {
-      audio.addEventListener("canplay", handleCanPlay);
-    } else {
+      };
+      audio.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
+    } else if (initialSeekDone.current || currentTrackIndex !== initialTrackIndex) {
       setCurrentTimeMs(0);
     }
 
@@ -62,7 +59,6 @@ function PlayerView({
 
     return () => {
       audio.pause();
-      audio.removeEventListener("canplay", handleCanPlay);
     };
   }, [currentTrack.stream_url]);
 
@@ -71,7 +67,9 @@ function PlayerView({
     if (!audio) return;
 
     const handleTimeUpdate = () => {
-      setCurrentTimeMs(audio.currentTime * 1000);
+      const timeMs = audio.currentTime * 1000;
+      setCurrentTimeMs(timeMs);
+      currentTimeMsRef.current = timeMs;
     };
 
     const handleEnded = () => {
@@ -91,25 +89,26 @@ function PlayerView({
     };
   }, [currentTrackIndex, tracks.length]);
 
-  // Save state periodically (every 5 seconds)
+  useEffect(() => {
+    currentTrackIndexRef.current = currentTrackIndex;
+  }, [currentTrackIndex]);
+
   useEffect(() => {
     if (!onStateChange) return;
 
     const interval = setInterval(() => {
-      onStateChange(currentTrackIndex, currentTimeMs);
+      onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
     }, 5000);
 
-    // Also save on track change
-    onStateChange(currentTrackIndex, currentTimeMs);
+    onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
 
     return () => clearInterval(interval);
   }, [currentTrackIndex, onStateChange]);
 
-  // Save state on unmount
   useEffect(() => {
     return () => {
       if (onStateChange) {
-        onStateChange(currentTrackIndex, currentTimeMs);
+        onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
       }
     };
   }, []);

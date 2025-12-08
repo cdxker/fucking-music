@@ -1,6 +1,6 @@
 import { createStore } from 'tinybase';
 import { createLocalPersister } from 'tinybase/persisters/persister-browser';
-import type { FuckingPlaylist, FuckingTrack, PlayerState, PlaylistId, TrackId, FuckingPlaylistWithTracks } from "@/shared/types";
+import type { FuckingPlaylist, FuckingTrack, PlayerState, PlaylistId, TrackId } from "@/shared/types";
 
 // Create the TinyBase store
 const store = createStore()
@@ -49,18 +49,23 @@ export class Database {
     await initPersister();
   }
 
-  getPlayerState(): PlayerState {
+  getPlayerState(): PlayerState | undefined {
     const activePlaylist = store.getValue('activePlaylist') as string;
     const activeTrack = store.getValue('activeTrack') as string;
     const trackTimestamp = store.getValue('trackTimestamp') as number;
+    const lastPlaylistId = store.getValue('lastPlaylistId') as string;
+
+    if (!lastPlaylistId) return undefined;
+
     return {
-      activePlaylist: activePlaylist ? activePlaylist as PlaylistId : undefined,
-      activeTrack: activeTrack ? activeTrack as TrackId : undefined,
-      trackTimestamp: trackTimestamp || undefined,
+      activePlaylist: activePlaylist as PlaylistId,
+      activeTrack: activeTrack as TrackId,
+      trackTimestamp,
+      lastPlaylistId: lastPlaylistId as PlaylistId,
     };
   }
 
-  setPlayerState(state: PlayerState): void {
+  setPlayerState(state: Partial<PlayerState>): void {
     if (state.activePlaylist !== undefined) {
       store.setValue('activePlaylist', state.activePlaylist);
     }
@@ -70,15 +75,9 @@ export class Database {
     if (state.trackTimestamp !== undefined) {
       store.setValue('trackTimestamp', state.trackTimestamp);
     }
-  }
-
-  getLastPlaylistId(): PlaylistId | null {
-    const id = store.getValue('lastPlaylistId') as string;
-    return id ? id as PlaylistId : null;
-  }
-
-  setLastPlaylistId(id: PlaylistId): void {
-    store.setValue('lastPlaylistId', id);
+    if (state.lastPlaylistId !== undefined) {
+      store.setValue('lastPlaylistId', state.lastPlaylistId);
+    }
   }
 
   getTrack(trackId: TrackId): FuckingTrack | null {
@@ -112,27 +111,6 @@ export class Database {
     };
   }
 
-  getPlaylistWithTracks(playlistId: PlaylistId): FuckingPlaylistWithTracks | null {
-    const playlist = this.getPlaylist(playlistId);
-    if (!playlist) return null;
-
-    const tracks = this.getTracksByPlaylist(playlistId);
-    return { ...playlist, tracks };
-  }
-
-  insertTrack(track: FuckingTrack, playlistId: PlaylistId): void {
-    store.setRow('tracks', track.id, {
-      id: track.id,
-      playlist_id: playlistId,
-      time_ms: track.time_ms,
-      name: track.name,
-      artists: JSON.stringify(track.artists),
-      tags: JSON.stringify(track.tags || []),
-      stream_url: track.stream_url,
-      next_tracks: track.next_tracks ? JSON.stringify(track.next_tracks) : '',
-    });
-  }
-
   insertPlaylist(playlist: FuckingPlaylist): void {
     store.setRow('playlists', playlist.id, {
       id: playlist.id,
@@ -141,14 +119,22 @@ export class Database {
       artists: JSON.stringify(playlist.artists),
       first_track_id: playlist.first_track.id,
     });
+    this.setPlayerState({ lastPlaylistId: playlist.id });
   }
 
-  insertPlaylistWithTracks(playlist: FuckingPlaylistWithTracks): void {
-    for (const track of playlist.tracks) {
-      this.insertTrack(track, playlist.id);
+  insertTracks(tracks: FuckingTrack[], playlistId: PlaylistId): void {
+    for (const track of tracks) {
+      store.setRow('tracks', track.id, {
+        id: track.id,
+        playlist_id: playlistId,
+        time_ms: track.time_ms,
+        name: track.name,
+        artists: JSON.stringify(track.artists),
+        tags: JSON.stringify(track.tags || []),
+        stream_url: track.stream_url,
+        next_tracks: track.next_tracks ? JSON.stringify(track.next_tracks) : '',
+      });
     }
-    this.insertPlaylist(playlist);
-    this.setLastPlaylistId(playlist.id);
   }
 
   getPlaylists(): FuckingPlaylist[] {
@@ -165,7 +151,7 @@ export class Database {
     return playlists;
   }
 
-  getTracksByPlaylist(playlistId: PlaylistId): FuckingTrack[] {
+  getTracks(playlistId: PlaylistId): FuckingTrack[] {
     const tracks: FuckingTrack[] = [];
     const rowIds = store.getRowIds('tracks');
 
@@ -176,20 +162,6 @@ export class Database {
         if (track) {
           tracks.push(track);
         }
-      }
-    }
-
-    return tracks;
-  }
-
-  getTracks(): FuckingTrack[] {
-    const tracks: FuckingTrack[] = [];
-    const rowIds = store.getRowIds('tracks');
-
-    for (const rowId of rowIds) {
-      const track = this.getTrack(rowId as TrackId);
-      if (track) {
-        tracks.push(track);
       }
     }
 

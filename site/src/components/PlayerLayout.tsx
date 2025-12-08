@@ -1,39 +1,39 @@
 import { Button } from "@/components/ui/button";
 import PlayerView from "./PlayerView";
 import { useState, useEffect, useRef } from "react";
-import type { FuckingPlaylistWithTracks, TrackId } from "../shared/types";
+import type { FuckingPlaylist, FuckingTrack, TrackId } from "../shared/types";
 import { db } from "@/lib/store";
 
 export default function PlayerLayout() {
-  const [playlist, setPlaylist] = useState<FuckingPlaylistWithTracks | null>(null);
+  const [playlist, setPlaylist] = useState<FuckingPlaylist | null>(null);
+  const [tracks, setTracks] = useState<FuckingTrack[]>([]);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [initialTrackIndex, setInitialTrackIndex] = useState(0);
   const [initialTimeMs, setInitialTimeMs] = useState(0);
-  const tracksRef = useRef<FuckingPlaylistWithTracks["tracks"]>([]);
+  const tracksRef = useRef<FuckingTrack[]>([]);
 
   // Initialize store and load last playlist on mount
   useEffect(() => {
     const init = async () => {
       await db.init();
-      const lastPlaylistId = db.getLastPlaylistId();
-      if (lastPlaylistId) {
-        const savedPlaylist = db.getPlaylistWithTracks(lastPlaylistId);
-        if (savedPlaylist) {
-          tracksRef.current = savedPlaylist.tracks;
-          const playerState = db.getPlayerState();
-          if (playerState.activeTrack) {
-            const trackIndex = savedPlaylist.tracks.findIndex(t => t.id === playerState.activeTrack);
-            if (trackIndex !== -1) {
-              setInitialTrackIndex(trackIndex);
-            }
+      const playerState = db.getPlayerState();
+      console.log('Loaded playerState:', playerState);
+      if (playerState) {
+        const savedPlaylist = db.getPlaylist(playerState.lastPlaylistId);
+        const savedTracks = db.getTracks(playerState.lastPlaylistId);
+        if (savedPlaylist && savedTracks.length > 0) {
+          tracksRef.current = savedTracks;
+          const trackIndex = savedTracks.findIndex(t => t.id === playerState.activeTrack);
+          if (trackIndex !== -1) {
+            setInitialTrackIndex(trackIndex);
           }
-          if (playerState.trackTimestamp !== undefined) {
-            setInitialTimeMs(playerState.trackTimestamp);
-          }
+          console.log('Setting initialTimeMs to:', playerState.trackTimestamp);
+          setInitialTimeMs(playerState.trackTimestamp);
           setPlaylist(savedPlaylist);
+          setTracks(savedTracks);
         }
       }
       setInitializing(false);
@@ -55,16 +55,18 @@ export default function PlayerLayout() {
 
     try {
       const res = await fetch(`/api/bandcamp/scrape?url=${encodeURIComponent(inputValue)}`);
-      const data: FuckingPlaylistWithTracks = await res.json();
+      const data: { playlist: FuckingPlaylist; tracks: FuckingTrack[] } = await res.json();
 
       // Save to local store
-      db.insertPlaylistWithTracks(data);
+      db.insertPlaylist(data.playlist);
+      db.insertTracks(data.tracks, data.playlist.id);
       db.setPlayerState({ activeTrack: data.tracks[0]?.id, trackTimestamp: 0 });
 
       tracksRef.current = data.tracks;
       setInitialTrackIndex(0);
       setInitialTimeMs(0);
-      setPlaylist(data);
+      setPlaylist(data.playlist);
+      setTracks(data.tracks);
       setShowInput(false);
       setInputValue("");
     } catch (e) {
@@ -80,11 +82,11 @@ export default function PlayerLayout() {
 
   return (
     <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-      {playlist && !showInput && (
+      {playlist && tracks.length > 0 && !showInput && (
         <>
           <PlayerView
             playlist={playlist}
-            tracks={playlist.tracks}
+            tracks={tracks}
             initialTrackIndex={initialTrackIndex}
             initialTimeMs={initialTimeMs}
             onStateChange={handleStateChange}
@@ -102,7 +104,7 @@ export default function PlayerLayout() {
         </>
       )}
 
-      {(!playlist || showInput) && (
+      {(!playlist || tracks.length === 0 || showInput) && (
         <div className="w-full h-screen flex justify-center items-center">
           {!showInput ? (
             <Button
