@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import * as Slider from "@radix-ui/react-slider";
-import type { Playlist, Track } from "@/shared/types";
+import type { FuckingPlaylist, FuckingTrack } from "@/shared/types";
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -14,8 +14,8 @@ function PlayerView({
   tracks,
 }
   : {
-  playlist: Playlist,
-  tracks: Track[]
+  playlist: FuckingPlaylist,
+  tracks: FuckingTrack[]
 }) {
 
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
