@@ -12,16 +12,23 @@ function formatTime(ms: number): string {
 function PlayerView({
   playlist,
   tracks,
-}
-  : {
-  playlist: FuckingPlaylist,
-  tracks: FuckingTrack[]
+  initialTrackIndex = 0,
+  initialTimeMs = 0,
+  onStateChange,
+}: {
+  playlist: FuckingPlaylist;
+  tracks: FuckingTrack[];
+  initialTrackIndex?: number;
+  initialTimeMs?: number;
+  onStateChange?: (trackIndex: number, timeMs: number) => void;
 }) {
-
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex);
+  const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const initialSeekDone = useRef(false);
+  const currentTimeMsRef = useRef(initialTimeMs);
+  const currentTrackIndexRef = useRef(initialTrackIndex);
 
   const currentTrack = tracks[currentTrackIndex];
   const totalDuration = currentTrack.time_ms;
@@ -34,7 +41,17 @@ function PlayerView({
 
     audio.src = currentTrack.stream_url;
     audio.load();
-    setCurrentTimeMs(0);
+
+    if (!initialSeekDone.current && currentTrackIndex === initialTrackIndex && initialTimeMs > 0) {
+      const handleLoadedMetadata = () => {
+        audio.currentTime = initialTimeMs / 1000;
+        setCurrentTimeMs(initialTimeMs);
+        initialSeekDone.current = true;
+      };
+      audio.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
+    } else if (initialSeekDone.current || currentTrackIndex !== initialTrackIndex) {
+      setCurrentTimeMs(0);
+    }
 
     if (isPlaying) {
       audio.play();
@@ -50,7 +67,9 @@ function PlayerView({
     if (!audio) return;
 
     const handleTimeUpdate = () => {
-      setCurrentTimeMs(audio.currentTime * 1000);
+      const timeMs = audio.currentTime * 1000;
+      setCurrentTimeMs(timeMs);
+      currentTimeMsRef.current = timeMs;
     };
 
     const handleEnded = () => {
@@ -69,6 +88,30 @@ function PlayerView({
       audio.removeEventListener("ended", handleEnded);
     };
   }, [currentTrackIndex, tracks.length]);
+
+  useEffect(() => {
+    currentTrackIndexRef.current = currentTrackIndex;
+  }, [currentTrackIndex]);
+
+  useEffect(() => {
+    if (!onStateChange) return;
+
+    const interval = setInterval(() => {
+      onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
+    }, 5000);
+
+    onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
+
+    return () => clearInterval(interval);
+  }, [currentTrackIndex, onStateChange]);
+
+  useEffect(() => {
+    return () => {
+      if (onStateChange) {
+        onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
+      }
+    };
+  }, []);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;
