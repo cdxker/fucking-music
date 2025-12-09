@@ -34,19 +34,15 @@ const store = createStore()
 let persister: ReturnType<typeof createLocalPersister> | null = null;
 let initialized = false;
 
-async function initPersister() {
-  if (initialized) return;
-  if (typeof window === 'undefined') return; // SSR guard
-
-  persister = createLocalPersister(store, 'fucking-music-store');
-  await persister.load();
-  await persister.startAutoSave();
-  initialized = true;
-}
-
 export class Database {
   async init(): Promise<void> {
-    await initPersister();
+    if (initialized) return;
+    if (typeof window === 'undefined') return; // SSR guard
+
+    persister = createLocalPersister(store, 'fucking-music-store');
+    await persister.load();
+    await persister.startAutoSave();
+    initialized = true;
   }
 
   getPlayerState(): PlayerState | undefined {
