@@ -155,15 +155,17 @@ function PlayerView({
     <div className="flex flex-col gap-4 justify-center items-center">
       <div className="max-w-2xl">
 
-        {/*
-      <div className="flex justify-between items-center">
-        <span className="text-4xl text-white/50 tracking-tight">less</span>
-        <span className="text-4xl text-white/50 tracking-tight">more?</span>
-      </div> */}
-
-      <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight mt-2">
-        fucking music
-      </h1>
+      <div className="flex items-center justify-between w-full">
+        <a href="/less" className="text-4xl text-white/80 tracking-tight hover:text-white transition-colors">
+          less
+        </a>
+        <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight">
+          fucking music
+        </h1>
+        <a href="/more" className="text-4xl text-white/80 tracking-tight hover:text-white transition-colors">
+          more
+        </a>
+      </div>
 
       <div className="mt-4 space-y-1">
         <div className="flex gap-4 text-white/90 text-base">

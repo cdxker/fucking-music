@@ -50,9 +50,17 @@ export default function PlaylistsView() {
   return (
     <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight mb-8">
-          fucking music
-        </h1>
+        <div className="flex items-center justify-between w-full mb-8">
+          <a href="/less" className="text-4xl text-white/80 tracking-tight hover:text-white transition-colors">
+            less
+          </a>
+          <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight">
+            fucking music
+          </h1>
+          <a href="/more" className="text-4xl text-white/80 tracking-tight hover:text-white transition-colors">
+            more
+          </a>
+        </div>
 
         <div className="space-y-4">
           {playlists.map((playlist) => (
