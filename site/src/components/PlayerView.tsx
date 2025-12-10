@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import * as Slider from "@radix-ui/react-slider";
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types";
+import Header from "./Header";
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -155,17 +156,7 @@ function PlayerView({
     <div className="flex flex-col gap-4 justify-center items-center">
       <div className="max-w-2xl">
 
-      <div className="flex items-center justify-between w-full">
-        <a href="/less" className="text-4xl text-white/80 tracking-tight hover:text-white transition-colors">
-          less
-        </a>
-        <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight">
-          fucking music
-        </h1>
-        <a href="/more" className="text-4xl text-white/80 tracking-tight hover:text-white transition-colors">
-          more
-        </a>
-      </div>
+      <Header active="less" />
 
       <div className="mt-4 space-y-1">
         <div className="flex gap-4 text-white/90 text-base">
