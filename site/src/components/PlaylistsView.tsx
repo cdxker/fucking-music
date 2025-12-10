@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import type { FuckingPlaylist, PlaylistId } from "@/shared/types";
 import { db } from "@/lib/store";
+import Header from "./Header";
 
 interface PlaylistWithDuration extends FuckingPlaylist {
   totalDurationMs: number;
@@ -50,9 +51,9 @@ export default function PlaylistsView() {
   return (
     <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight mb-8">
-          fucking music
-        </h1>
+        <div className="mb-8">
+          <Header active="more" />
+        </div>
 
         <div className="space-y-4">
           {playlists.map((playlist) => (

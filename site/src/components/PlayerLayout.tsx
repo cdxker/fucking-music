@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import PlayerView from "./PlayerView";
 import { useState, useEffect, useRef } from "react";
-import type { FuckingPlaylist, FuckingTrack, TrackId } from "../shared/types";
+import type { FuckingPlaylist, FuckingTrack } from "../shared/types";
 import { db } from "@/lib/store";
 
 export default function PlayerLayout() {
@@ -15,12 +15,11 @@ export default function PlayerLayout() {
   const [initialTimeMs, setInitialTimeMs] = useState(0);
   const tracksRef = useRef<FuckingTrack[]>([]);
 
-  // Initialize store and load last playlist on mount
   useEffect(() => {
     const init = async () => {
       await db.init();
       const playerState = db.getPlayerState();
-      console.log('Loaded playerState:', playerState);
+
       if (playerState) {
         const savedPlaylist = db.getPlaylist(playerState.lastPlaylistId);
         const savedTracks = db.getTracks(playerState.lastPlaylistId);
@@ -75,7 +74,6 @@ export default function PlayerLayout() {
     }
   };
 
-  // Show nothing while initializing to prevent flash
   if (initializing) {
     return <div className="min-h-screen bg-[#0B0B0B]" />;
   }
