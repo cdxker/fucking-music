@@ -34,13 +34,17 @@ export interface BandcampPageData {
   keywords?: string[];
 }
 
+export type AudioSource =
+  | { type: 'stream'; url: string }
+  | { type: 'youtube'; id: string };
+
 export interface FuckingTrack {
   id: TrackId;
   time_ms: number;
   name: string;
   artists: string[];
   tags?: string[];
-  stream_url: string;
+  audio: AudioSource;
   next_tracks?: Record<PlaylistId, TrackId>;
 }
 
@@ -50,3 +54,4 @@ export interface PlayerState {
   trackTimestamp: number;
   lastPlaylistId: PlaylistId;
 }
+
