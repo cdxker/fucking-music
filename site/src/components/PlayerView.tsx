@@ -50,15 +50,22 @@ function PlayerView({
         currentBlobUrlRef.current = null;
       }
 
-      // Get audio from cache or fetch from network
-      const audioUrl = await musicCache.getOrFetch(currentTrack.id, currentTrack.stream_url);
+      let audioUrl: string;
+
+      if (currentTrack.audio.type === 'youtube') {
+        audioUrl = `/api/youtube/stream?id=${currentTrack.audio.id}`;
+      } else {
+        audioUrl = await musicCache.getOrFetch(currentTrack.id, currentTrack.audio.url);
+        currentBlobUrlRef.current = audioUrl;
+      }
 
       if (cancelled) {
-        URL.revokeObjectURL(audioUrl);
+        if (currentBlobUrlRef.current) {
+          URL.revokeObjectURL(currentBlobUrlRef.current);
+        }
         return;
       }
 
-      currentBlobUrlRef.current = audioUrl;
       audio.src = audioUrl;
       audio.load();
 
@@ -84,7 +91,7 @@ function PlayerView({
       cancelled = true;
       audio.pause();
     };
-  }, [currentTrack.id, currentTrack.stream_url]);
+  }, [currentTrack.id, currentTrack.audio]);
 
   useEffect(() => {
     const audio = audioRef.current;

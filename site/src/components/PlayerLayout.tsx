@@ -53,10 +53,9 @@ export default function PlayerLayout() {
     if (url.includes('spotify.com')) {
       return '/api/spotify/scrape';
     }
-    if (url.includes('bandcamp.com')) {
-      return '/api/bandcamp/scrape';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return '/api/youtube/scrape';
     }
-    // Default to bandcamp for backwards compatibility
     return '/api/bandcamp/scrape';
   };
 
@@ -137,7 +136,7 @@ export default function PlayerLayout() {
             <div className="flex flex-col gap-4 w-full max-w-md">
               <input
                 type="url"
-                placeholder="Paste Bandcamp or Spotify URL..."
+                placeholder="Paste Bandcamp, Spotify, or YouTube URL..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
