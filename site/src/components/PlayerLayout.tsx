@@ -3,6 +3,7 @@ import PlayerView from "./PlayerView";
 import { useState, useEffect, useRef } from "react";
 import type { FuckingPlaylist, FuckingTrack } from "../shared/types";
 import { db } from "@/lib/store";
+import { musicCache } from "@/lib/musicCache";
 
 export default function PlayerLayout() {
   const [playlist, setPlaylist] = useState<FuckingPlaylist | null>(null);
@@ -18,6 +19,7 @@ export default function PlayerLayout() {
   useEffect(() => {
     const init = async () => {
       await db.init();
+      await musicCache.init();
       const playerState = db.getPlayerState();
 
       if (playerState) {

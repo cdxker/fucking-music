@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import * as Slider from "@radix-ui/react-slider";
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types";
+import { musicCache } from "@/lib/musicCache";
 import Header from "./Header";
 
 function formatTime(ms: number): string {
@@ -30,6 +31,7 @@ function PlayerView({
   const initialSeekDone = useRef(false);
   const currentTimeMsRef = useRef(initialTimeMs);
   const currentTrackIndexRef = useRef(initialTrackIndex);
+  const currentBlobUrlRef = useRef<string | null>(null);
 
   const currentTrack = tracks[currentTrackIndex];
   const totalDuration = currentTrack.time_ms;
@@ -39,29 +41,50 @@ function PlayerView({
       audioRef.current = new Audio();
     }
     const audio = audioRef.current;
+    let cancelled = false;
 
-    audio.src = currentTrack.stream_url;
-    audio.load();
+    const loadAudio = async () => {
+      // Revoke previous blob URL to free memory
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
 
-    if (!initialSeekDone.current && currentTrackIndex === initialTrackIndex && initialTimeMs > 0) {
-      const handleLoadedMetadata = () => {
-        audio.currentTime = initialTimeMs / 1000;
-        setCurrentTimeMs(initialTimeMs);
-        initialSeekDone.current = true;
-      };
-      audio.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
-    } else if (initialSeekDone.current || currentTrackIndex !== initialTrackIndex) {
-      setCurrentTimeMs(0);
-    }
+      // Get audio from cache or fetch from network
+      const audioUrl = await musicCache.getOrFetch(currentTrack.id, currentTrack.stream_url);
 
-    if (isPlaying) {
-      audio.play();
-    }
+      if (cancelled) {
+        URL.revokeObjectURL(audioUrl);
+        return;
+      }
+
+      currentBlobUrlRef.current = audioUrl;
+      audio.src = audioUrl;
+      audio.load();
+
+      if (!initialSeekDone.current && currentTrackIndex === initialTrackIndex && initialTimeMs > 0) {
+        const handleLoadedMetadata = () => {
+          audio.currentTime = initialTimeMs / 1000;
+          setCurrentTimeMs(initialTimeMs);
+          initialSeekDone.current = true;
+        };
+        audio.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
+      } else if (initialSeekDone.current || currentTrackIndex !== initialTrackIndex) {
+        setCurrentTimeMs(0);
+      }
+
+      if (isPlaying) {
+        audio.play();
+      }
+    };
+
+    loadAudio();
 
     return () => {
+      cancelled = true;
       audio.pause();
     };
-  }, [currentTrack.stream_url]);
+  }, [currentTrack.id, currentTrack.stream_url]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -110,6 +133,10 @@ function PlayerView({
     return () => {
       if (onStateChange) {
         onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current);
+      }
+      // Clean up blob URL on unmount
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
       }
     };
   }, []);
