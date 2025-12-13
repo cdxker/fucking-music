@@ -49,14 +49,31 @@ export default function PlayerLayout() {
     }
   };
 
+  const getApiEndpoint = (url: string): string => {
+    if (url.includes('spotify.com')) {
+      return '/api/spotify/scrape';
+    }
+    if (url.includes('bandcamp.com')) {
+      return '/api/bandcamp/scrape';
+    }
+    // Default to bandcamp for backwards compatibility
+    return '/api/bandcamp/scrape';
+  };
+
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
 
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/bandcamp/scrape?url=${encodeURIComponent(inputValue)}`);
-      const data: { playlist: FuckingPlaylist; tracks: FuckingTrack[] } = await res.json();
+      const endpoint = getApiEndpoint(inputValue);
+      const res = await fetch(`${endpoint}?url=${encodeURIComponent(inputValue)}`);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        alert(data.error || 'Failed to load music');
+        return;
+      }
 
       // Save to local store
       db.insertPlaylist(data.playlist);
@@ -71,6 +88,7 @@ export default function PlayerLayout() {
       setShowInput(false);
       setInputValue("");
     } catch (e) {
+      alert('Failed to load music');
     } finally {
       setLoading(false);
     }
@@ -119,7 +137,7 @@ export default function PlayerLayout() {
             <div className="flex flex-col gap-4 w-full max-w-md">
               <input
                 type="url"
-                placeholder="Paste Bandcamp album URL..."
+                placeholder="Paste Bandcamp or Spotify URL..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
