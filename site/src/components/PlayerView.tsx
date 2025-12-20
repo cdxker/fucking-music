@@ -90,7 +90,7 @@ function PlayerView({
             cancelled = true
             audio.pause()
         }
-    }, [currentTrack.id, currentTrack.stream_url])
+    }, [currentTrack.id, currentTrack.stream_url, currentTrackIndex, initialTimeMs, initialTrackIndex, isPlaying])
 
     useEffect(() => {
         const audio = audioRef.current
@@ -145,7 +145,7 @@ function PlayerView({
                 URL.revokeObjectURL(currentBlobUrlRef.current)
             }
         }
-    }, [])
+    }, [onStateChange])
 
     const togglePlayPause = () => {
         const audio = audioRef.current
@@ -178,7 +178,7 @@ function PlayerView({
         const remainingTracks = tracks.slice(currentTrackIndex + 1)
         const remainingTracksTime = remainingTracks.reduce((acc, track) => acc + track.time_ms, 0)
         return remainingInCurrentTrack + remainingTracksTime
-    }, [currentTrackIndex, currentTimeMs, tracks])
+    }, [currentTrack.time_ms, currentTimeMs, tracks, currentTrackIndex])
 
     const remainingMinutes = Math.floor(remainingMs / 60000)
 
