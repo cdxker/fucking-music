@@ -1,3 +1,3 @@
 export function GET({ url }) {
-    return new Response(JSON.stringify([]));
+    return new Response(JSON.stringify([]))
 }
