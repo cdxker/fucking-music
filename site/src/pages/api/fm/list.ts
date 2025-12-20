@@ -1,3 +1,5 @@
-export function GET({ url }) {
-    return new Response(JSON.stringify([]));
+import type { APIRoute } from "astro"
+
+export const GET: APIRoute = ({ url }) => {
+    return new Response(JSON.stringify([]))
 }
