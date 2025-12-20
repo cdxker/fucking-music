@@ -1,0 +1,23 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: fuckingmusic.com
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /public/fucking-music/site
+            tmux kill-session -t fucking-music 2>/dev/null || true
+            tmux new-session -d -s fucking-music
+            tmux send-keys -t fucking-music "cd /public/fucking-music/site && git pull && yarn build && yarn preview" Enter
+
