@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "https-proxy-agent": "^7.0.6",
+    "node-fetch": "^2.7.0"
+  }
+}
