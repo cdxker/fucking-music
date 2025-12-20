@@ -9,7 +9,7 @@
         "astro": "astro",
         "test": "vitest run",
         "format": "prettier --write .",
-        "lint": "eslint ."
+        "lint": "eslint . && tsc --noEmit"
     },
     "dependencies": {
         "@astrojs/node": "^9.5.1",
