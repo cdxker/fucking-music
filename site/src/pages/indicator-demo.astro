@@ -1,0 +1,16 @@
+---
+import Layout from "./Layout.astro"
+import NowPlayingIndicatorDemo from "../components/NowPlayingIndicatorDemo"
+---
+
+<Layout title="Now Playing Indicator - Demo">
+  <main class="h-screen bg-[#0B0B0B] flex items-center justify-center">
+    <div class="text-center">
+      <h1 class="text-2xl text-white mb-8">Now Playing Indicator Demo</h1>
+      <p class="text-white/60 mb-4">The indicator appears at the bottom of the screen</p>
+      <p class="text-white/40 text-sm">Click the play/pause button to toggle animation</p>
+    </div>
+    <NowPlayingIndicatorDemo client:load />
+  </main>
+</Layout>
+
