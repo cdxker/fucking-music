@@ -2,29 +2,35 @@ import { useState, useEffect } from "react"
 import { NowPlayingIndicator } from "./NowPlayingIndicator"
 import type { FuckingTrack, TrackId } from "@/shared/types"
 
+// Demo track duration: 5 minutes and 22 seconds
+const DEMO_TRACK_DURATION_MS = 322000
+
 const mockTracks: FuckingTrack[] = [
     {
         id: "track-demo-1" as TrackId,
         name: "I dream of you",
         artists: ["Demo Artist"],
-        time_ms: 322000,
+        time_ms: DEMO_TRACK_DURATION_MS,
         audio: { type: "stream", url: "" },
     },
     {
         id: "track-demo-2" as TrackId,
         name: "marauder",
         artists: ["Demo Artist"],
-        time_ms: 322000,
+        time_ms: DEMO_TRACK_DURATION_MS,
         audio: { type: "stream", url: "" },
     },
     {
         id: "track-demo-3" as TrackId,
         name: "spending saturday scorned",
         artists: ["Demo Artist"],
-        time_ms: 322000,
+        time_ms: DEMO_TRACK_DURATION_MS,
         audio: { type: "stream", url: "" },
     },
 ]
+
+// Currently playing track (first track in the list)
+const currentTrack = mockTracks[0]
 
 /**
  * Demo component for NowPlayingIndicator
@@ -32,13 +38,13 @@ const mockTracks: FuckingTrack[] = [
  */
 export const NowPlayingIndicatorDemo = () => {
     const [isPlaying, setIsPlaying] = useState(true)
-    const [currentTimeMs, setCurrentTimeMs] = useState(322000) // 05:22
+    const [currentTimeMs, setCurrentTimeMs] = useState(DEMO_TRACK_DURATION_MS)
 
     // Simulate progress when playing
     useEffect(() => {
         if (!isPlaying) return
         const interval = setInterval(() => {
-            setCurrentTimeMs((prev) => (prev + 1000) % mockTracks[0].time_ms)
+            setCurrentTimeMs((prev) => (prev + 1000) % currentTrack.time_ms)
         }, 1000)
         return () => clearInterval(interval)
     }, [isPlaying])
