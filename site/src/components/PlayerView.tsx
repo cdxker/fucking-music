@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import * as Slider from "@radix-ui/react-slider"
-import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
+import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { musicCache } from "@/lib/musicCache"
 import Header from "./Header"
 import { db } from "@/lib/store"
+import SideTrack from "./SideTrack"
 
 function formatTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000)
@@ -200,12 +201,21 @@ function PlayerView({
 
     const remainingMinutes = Math.floor(remainingMs / 60000)
 
-    const nextTracks: FuckingTrack[] = useMemo(() => {
+    const nextTracks = useMemo(() => {
         if (!currentTrack.next_tracks) return []
-        return Object.entries(currentTrack.next_tracks).filter(([playlistId]) => playlistId !== playlist.id).map(([_, trackId]) => trackId).map(
-            (trackId) => db.getTrack(trackId)
-        ).filter((track) => track !== undefined && track !== null)
-    }, [currentTrack, playlist])        
+        return Object.entries(currentTrack.next_tracks)
+            .filter(([playlistId]) => playlistId !== playlist.id)
+            .filter(
+                ([playlistId, track]) =>
+                    track !== undefined &&
+                    track !== null &&
+                    playlistId !== null &&
+                    playlistId !== undefined
+            ).map(([playlistId, trackId]) => ({
+                playlist: db.getPlaylist(playlistId as PlaylistId) as FuckingPlaylist,
+                track: db.getTrack(trackId as TrackId) as FuckingTrack,
+            }))
+    }, [currentTrack, playlist])
 
     console.log(nextTracks)
 
@@ -225,20 +235,32 @@ function PlayerView({
                     </div>
                 </div>
 
-                <div className="mt-2 relative">
-                    <div>
-                        <img
-                            src={playlist.track_cover_uri}
-                            alt={`${playlist.name} album cover`}
-                            className="w-full aspect-square object-cover"
-                        />
-                        <button
-                            onClick={togglePlayPause}
-                            className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
-                        >
-                            <span className="text-white text-6xl">{isPlaying ? "⏸" : "▶"}</span>
-                        </button>
+                <div className="flex">
+                    <SideTrack
+                        track={nextTracks[0]?.track}
+                        playlist={nextTracks[0]?.playlist}
+                        position="left"
+                    />
+                    <div className="mt-2 relative z-20">
+                        <div>
+                            <img
+                                src={playlist.track_cover_uri}
+                                alt={`${playlist.name} album cover`}
+                                className="w-full aspect-square object-cover"
+                            />
+                            <button
+                                onClick={togglePlayPause}
+                                className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
+                            >
+                                <span className="text-white text-6xl">{isPlaying ? "⏸" : "▶"}</span>
+                            </button>
+                        </div>
                     </div>
+                    <SideTrack
+                        track={nextTracks[1]?.track}
+                        playlist={nextTracks[1]?.playlist}
+                        position="right"
+                    />
                 </div>
 
                 <div className="mt-4">

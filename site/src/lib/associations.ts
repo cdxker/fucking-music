@@ -14,9 +14,30 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
- * Randomly links songs in the library to create left/right associations.
- * This creates a discovery path through the music collection by assigning
- * random neighbors to each track from different playlists.
+ * Picks a random element from an array
+ */
+function pickRandom<T>(array: T[]): T {
+    return array[Math.floor(Math.random() * array.length)]
+}
+
+/**
+ * Finds the playlist ID that contains a given track
+ */
+function findPlaylistForTrack(
+    trackId: TrackId,
+    tracksByPlaylist: Map<PlaylistId, FuckingTrack[]>
+): PlaylistId | undefined {
+    for (const [playlistId, tracks] of tracksByPlaylist.entries()) {
+        if (tracks.some((t) => t.id === trackId)) {
+            return playlistId
+        }
+    }
+    return undefined
+}
+
+/**
+ * Randomly links songs in the library to create associations.
+ * Guarantees each track has exactly 2 associations from 2 different albums/playlists.
  */
 export function shuffleAssociations(): void {
     console.log("Shuffling associations")
@@ -34,49 +55,54 @@ export function shuffleAssociations(): void {
 
     if (allTracks.length === 0) return
 
-    const shuffledTracks = shuffleArray(allTracks)
+    const playlistIds = Array.from(tracksByPlaylist.keys())
 
-    for (let i = 0; i < shuffledTracks.length; i++) {
-        const currentTrack = shuffledTracks[i]
-        const nextTracks: Record<PlaylistId, TrackId> = {}
-
-        const playlistTracks = tracksByPlaylist.get(
-            currentTrack.id.split("-").slice(0, -1).join("-") as PlaylistId
-        )
-
-        let currentPlaylistId: PlaylistId | undefined
-        for (const [playlistId, tracks] of tracksByPlaylist.entries()) {
-            if (tracks.some((t) => t.id === currentTrack.id)) {
-                currentPlaylistId = playlistId
-                break
-            }
-        }
-
+    for (const currentTrack of allTracks) {
+        const currentPlaylistId = findPlaylistForTrack(currentTrack.id, tracksByPlaylist)
         if (!currentPlaylistId) continue
 
-        const leftIndex = i === 0 ? shuffledTracks.length - 1 : i - 1
-        const leftTrack = shuffledTracks[leftIndex]
+        // Get playlists other than the current track's playlist
+        const otherPlaylistIds = playlistIds.filter((id) => id !== currentPlaylistId)
 
-        for (const [playlistId, tracks] of tracksByPlaylist.entries()) {
-            if (tracks.some((t) => t.id === leftTrack.id)) {
-                nextTracks[playlistId] = leftTrack.id
-                break
-            }
-        }
+        const nextTracks: Record<PlaylistId, TrackId> = {}
 
-        const rightIndex = i === shuffledTracks.length - 1 ? 0 : i + 1
-        const rightTrack = shuffledTracks[rightIndex]
+        if (otherPlaylistIds.length >= 2) {
+            // Pick 2 unique random playlists
+            const shuffledPlaylists = shuffleArray(otherPlaylistIds)
+            const selectedPlaylists = shuffledPlaylists.slice(0, 2)
 
-        for (const [playlistId, tracks] of tracksByPlaylist.entries()) {
-            if (tracks.some((t) => t.id === rightTrack.id)) {
-                if (!nextTracks[playlistId]) {
-                    nextTracks[playlistId] = rightTrack.id
+            for (const playlistId of selectedPlaylists) {
+                const tracks = tracksByPlaylist.get(playlistId)
+                if (tracks && tracks.length > 0) {
+                    nextTracks[playlistId] = pickRandom(tracks).id
                 }
-                break
+            }
+        } else if (otherPlaylistIds.length === 1) {
+            // Only 1 other playlist - pick 2 different tracks from it
+            const playlistId = otherPlaylistIds[0]
+            const tracks = tracksByPlaylist.get(playlistId)
+            if (tracks && tracks.length >= 1) {
+                nextTracks[playlistId] = pickRandom(tracks).id
+            }
+            // Also include a track from the same playlist as fallback
+            const ownTracks = tracksByPlaylist.get(currentPlaylistId)
+            if (ownTracks && ownTracks.length > 1) {
+                const otherOwnTracks = ownTracks.filter((t) => t.id !== currentTrack.id)
+                if (otherOwnTracks.length > 0) {
+                    nextTracks[currentPlaylistId] = pickRandom(otherOwnTracks).id
+                }
+            }
+        } else {
+            // No other playlists - pick 2 different tracks from same playlist
+            const ownTracks = tracksByPlaylist.get(currentPlaylistId)
+            if (ownTracks && ownTracks.length > 1) {
+                const otherOwnTracks = ownTracks.filter((t) => t.id !== currentTrack.id)
+                if (otherOwnTracks.length > 0) {
+                    nextTracks[currentPlaylistId] = pickRandom(otherOwnTracks).id
+                }
             }
         }
 
-        // Update the track with new associations
         const updatedTrack: FuckingTrack = {
             ...currentTrack,
             next_tracks: nextTracks,
