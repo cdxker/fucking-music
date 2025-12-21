@@ -101,7 +101,7 @@ function PlayerView() {
                     />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 z-20">
                     <Slider.Root
                         className="relative flex items-center select-none touch-none w-full h-5"
                         value={[currentTimeMs]}
@@ -115,13 +115,13 @@ function PlayerView() {
                         <Slider.Thumb className="block w-3 h-3 bg-[#E85A4F] rounded-full focus:outline-none" />
                     </Slider.Root>
 
-                    <div className="flex justify-between mt-2 text-white/70 text-sm">
-                        <span>{formatTime(currentTimeMs)}</span>
-                        <span>{formatTime(totalDuration)}</span>
+                    <div className="flex justify-between mt-2 text-white/70 z-20 text-sm">
+                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(currentTimeMs)}</span>
+                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(totalDuration)}</span>
                     </div>
                 </div>
 
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 space-y-3 z-20">
                     {tracks.map((track, index) => (
                         <div
                             key={track.id}
@@ -133,7 +133,7 @@ function PlayerView() {
                                     <span className="text-white text-sm">▶</span>
                                 )}
                                 <span
-                                    className={`text-base ${index === currentTrackIndex ? "text-white ml-0" : "ml-6"}`}
+                                    className={`z-20 text-base ${index === currentTrackIndex ? "text-white ml-0" : "ml-6"}`}
                                 >
                                     {track.name}
                                 </span>
