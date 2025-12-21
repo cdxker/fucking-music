@@ -1,24 +1,35 @@
-import { useState, useRef, useEffect, useCallback } from "react"
-import type { FuckingTrack } from "@/shared/types"
+import { useState, useRef, useEffect, useCallback, useContext } from "react"
+import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 import { musicCache } from "@/lib/musicCache"
 import { db } from "@/lib/store"
+import { PlayerContext } from "./PlayerContext"
 
 export interface PlayerState {
+    // Playlist state (from context)
+    playlist: FuckingPlaylist | null
+    tracks: FuckingTrack[]
+    setPlaylistAndTracks: (playlist: FuckingPlaylist, tracks: FuckingTrack[]) => void
+
+    // Track state (computed in hook)
     currentTrackIndex: number
     currentTimeMs: number
     isPlaying: boolean
-    currentTrack: FuckingTrack
+    currentTrack: FuckingTrack | null
     totalDuration: number
+
+    // Control functions
     togglePlayPause: () => void
     handleSeek: (value: number) => void
     handleTrackSelect: (index: number) => void
 }
 
-export const usePlayerState = (
-    tracks: FuckingTrack[],
-    initialTrackIndex: number = 0,
-    initialTimeMs: number = 0
-): PlayerState => {
+export const usePlayerState = (): PlayerState => {
+    const playerContext = useContext(PlayerContext);
+    if (!playerContext) {
+        throw new Error("usePlayerState must be used within a PlayerProvider")
+    }
+    const { playlist, tracks, setPlaylistAndTracks, initialTrackIndex, initialTimeMs } = playerContext;
+
     const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
     const [isPlaying, setIsPlaying] = useState(false)
@@ -29,9 +40,22 @@ export const usePlayerState = (
     const currentTrackIndexRef = useRef(initialTrackIndex)
     const currentBlobUrlRef = useRef<string | null>(null)
     const isPlayingRef = useRef(isPlaying)
+    const prevTracksRef = useRef(tracks)
 
-    const currentTrack = tracks[currentTrackIndex]
-    const totalDuration = currentTrack.time_ms
+    const currentTrack = tracks.length > 0 ? tracks[currentTrackIndex] : null
+    const totalDuration = currentTrack?.time_ms ?? 0
+
+    // Reset track index when playlist changes
+    useEffect(() => {
+        if (prevTracksRef.current !== tracks && tracks.length > 0) {
+            setCurrentTrackIndex(0)
+            setCurrentTimeMs(0)
+            currentTimeMsRef.current = 0
+            currentTrackIndexRef.current = 0
+            initialSeekDone.current = true
+            prevTracksRef.current = tracks
+        }
+    }, [tracks])
 
     useEffect(() => {
         isPlayingRef.current = isPlaying
@@ -43,6 +67,8 @@ export const usePlayerState = (
 
     // Audio loading effect
     useEffect(() => {
+        if (!currentTrack) return
+
         if (!audioRef.current) {
             audioRef.current = new Audio()
         }
@@ -104,12 +130,12 @@ export const usePlayerState = (
             cancelled = true
             audio.pause()
         }
-    }, [currentTrack.id, currentTrack.audio, initialTrackIndex, initialTimeMs])
+    }, [currentTrack?.id, currentTrack?.audio, initialTrackIndex, initialTimeMs])
 
     // Time update and track ended handlers
     useEffect(() => {
         const audio = audioRef.current
-        if (!audio) return
+        if (!audio || !currentTrack) return
 
         const handleTimeUpdate = () => {
             const timeMs = audio.currentTime * 1000
@@ -132,7 +158,7 @@ export const usePlayerState = (
             audio.removeEventListener("timeupdate", handleTimeUpdate)
             audio.removeEventListener("ended", handleEnded)
         }
-    }, [currentTrackIndex, tracks.length])
+    }, [currentTrackIndex, tracks.length, currentTrack])
 
     // Save player state periodically
     const savePlayerState = useCallback(() => {
@@ -143,11 +169,13 @@ export const usePlayerState = (
     }, [tracks])
 
     useEffect(() => {
+        if (!currentTrack) return
+
         const interval = setInterval(savePlayerState, 5000)
         savePlayerState()
 
         return () => clearInterval(interval)
-    }, [currentTrackIndex, savePlayerState])
+    }, [currentTrackIndex, savePlayerState, currentTrack])
 
     // Cleanup on unmount
     useEffect(() => {
@@ -177,15 +205,21 @@ export const usePlayerState = (
 
         audio.currentTime = value / 1000
         setCurrentTimeMs(value)
+        currentTimeMsRef.current = value
     }, [])
 
     const handleTrackSelect = useCallback((index: number) => {
         setCurrentTrackIndex(index)
         setCurrentTimeMs(0)
+        currentTrackIndexRef.current = index
+        currentTimeMsRef.current = 0
         setIsPlaying(true)
     }, [])
 
     return {
+        playlist,
+        tracks,
+        setPlaylistAndTracks,
         currentTrackIndex,
         currentTimeMs,
         isPlaying,

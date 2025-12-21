@@ -13,18 +13,10 @@ function formatTime(ms: number): string {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
 }
 
-function PlayerView({
-    playlist,
-    tracks,
-    initialTrackIndex = 0,
-    initialTimeMs = 0,
-}: {
-    playlist: FuckingPlaylist
-    tracks: FuckingTrack[]
-    initialTrackIndex?: number
-    initialTimeMs?: number
-}) {
+function PlayerView() {
     const {
+        playlist,
+        tracks,
         currentTrackIndex,
         currentTimeMs,
         isPlaying,
@@ -33,19 +25,20 @@ function PlayerView({
         togglePlayPause,
         handleSeek,
         handleTrackSelect,
-    } = usePlayerState(tracks, initialTrackIndex, initialTimeMs)
+    } = usePlayerState()
 
     const remainingMs = useMemo(() => {
+        if (!currentTrack) return 0
         const remainingInCurrentTrack = currentTrack.time_ms - currentTimeMs
         const remainingTracks = tracks.slice(currentTrackIndex + 1)
         const remainingTracksTime = remainingTracks.reduce((acc, track) => acc + track.time_ms, 0)
         return remainingInCurrentTrack + remainingTracksTime
-    }, [currentTrack.time_ms, currentTrackIndex, currentTimeMs, tracks])
+    }, [currentTrack, currentTrackIndex, currentTimeMs, tracks])
 
     const remainingMinutes = Math.floor(remainingMs / 60000)
 
     const nextTracks = useMemo(() => {
-        if (!currentTrack.next_tracks) return []
+        if (!currentTrack?.next_tracks || !playlist) return []
         return Object.entries(currentTrack.next_tracks)
             .filter(([playlistId]) => playlistId !== playlist.id)
             .filter(
@@ -61,6 +54,10 @@ function PlayerView({
     }, [currentTrack, playlist])
 
     console.log(nextTracks)
+
+    if (!playlist || !currentTrack) {
+        return null
+    }
 
     return (
         <div className="flex flex-col gap-4 justify-center items-center">
