@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback, type ReactNode } from "react"
+import { createContext, useState, useCallback, useRef, type ReactNode, type MutableRefObject } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 import { db } from "@/lib/store"
 
@@ -16,6 +16,7 @@ export interface PlayerContextValue {
     initialTimeMs: number
     pendingTrackIndex: number | null
     clearPendingTrackIndex: () => void
+    audioRef: MutableRefObject<HTMLAudioElement | null>
 }
 
 export const PlayerContext = createContext<PlayerContextValue | null>(null)
@@ -38,8 +39,12 @@ export function PlayerProvider({
     const [playlist, setPlaylist] = useState<FuckingPlaylist | null>(initialPlaylist)
     const [tracks, setTracks] = useState<FuckingTrack[]>(initialTracks)
     const [pendingTrackIndex, setPendingTrackIndex] = useState<number | null>(null)
+    const audioRef = useRef<HTMLAudioElement | null>(null)
 
     const setPlaylistAndTracks = useCallback(({ playlist, tracks, startingTrackIndex }: SetPlaylistAndTracksParams) => {
+        if (audioRef.current) {
+            audioRef.current.pause()
+        }
         setPlaylist(playlist)
         setTracks(tracks)
         const trackIndex = startingTrackIndex ?? 0
@@ -60,6 +65,7 @@ export function PlayerProvider({
         initialTimeMs,
         pendingTrackIndex,
         clearPendingTrackIndex,
+        audioRef,
     }
 
     return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
