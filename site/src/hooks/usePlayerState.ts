@@ -2,13 +2,13 @@ import { useState, useRef, useEffect, useCallback, useContext } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 import { musicCache } from "@/lib/musicCache"
 import { db } from "@/lib/store"
-import { PlayerContext } from "./PlayerContext"
+import { PlayerContext, type SetPlaylistAndTracksParams } from "./PlayerContext"
 
 export interface PlayerState {
     // Playlist state (from context)
     playlist: FuckingPlaylist | null
     tracks: FuckingTrack[]
-    setPlaylistAndTracks: (playlist: FuckingPlaylist, tracks: FuckingTrack[]) => void
+    setPlaylistAndTracks: (params: SetPlaylistAndTracksParams) => void
 
     // Track state (computed in hook)
     currentTrackIndex: number
@@ -28,7 +28,7 @@ export const usePlayerState = (): PlayerState => {
     if (!playerContext) {
         throw new Error("usePlayerState must be used within a PlayerProvider")
     }
-    const { playlist, tracks, setPlaylistAndTracks, initialTrackIndex, initialTimeMs } = playerContext;
+    const { playlist, tracks, setPlaylistAndTracks, initialTrackIndex, initialTimeMs, pendingTrackIndex, clearPendingTrackIndex } = playerContext;
 
     const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
@@ -48,14 +48,16 @@ export const usePlayerState = (): PlayerState => {
     // Reset track index when playlist changes
     useEffect(() => {
         if (prevTracksRef.current !== tracks && tracks.length > 0) {
-            setCurrentTrackIndex(0)
+            const newIndex = pendingTrackIndex ?? 0
+            setCurrentTrackIndex(newIndex)
             setCurrentTimeMs(0)
             currentTimeMsRef.current = 0
-            currentTrackIndexRef.current = 0
+            currentTrackIndexRef.current = newIndex
             initialSeekDone.current = true
             prevTracksRef.current = tracks
+            clearPendingTrackIndex()
         }
-    }, [tracks])
+    }, [tracks, pendingTrackIndex, clearPendingTrackIndex])
 
     useEffect(() => {
         isPlayingRef.current = isPlaying

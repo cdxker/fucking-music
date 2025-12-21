@@ -52,7 +52,7 @@ function PlayerContent() {
             db.insertPlaylist(data.playlist)
             db.insertTracks(data.tracks, data.playlist.id)
 
-            setPlaylistAndTracks(data.playlist, data.tracks)
+            setPlaylistAndTracks({ playlist: data.playlist, tracks: data.tracks, startingTrackIndex: undefined })
             setShowInput(false)
             setInputValue("")
         } catch (e) {
