@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "../shared/types"
 import { db } from "@/lib/store"
 import { musicCache } from "@/lib/musicCache"
+import { shuffleAssociations } from "@/lib/associations"
 
 export default function PlayerLayout() {
     const [playlist, setPlaylist] = useState<FuckingPlaylist | null>(null)
@@ -33,11 +34,12 @@ export default function PlayerLayout() {
                     if (trackIndex !== -1) {
                         setInitialTrackIndex(trackIndex)
                     }
-                    console.log("Setting initialTimeMs to:", playerState.trackTimestamp)
+
                     setInitialTimeMs(playerState.trackTimestamp)
                     setPlaylist(savedPlaylist)
                     setTracks(savedTracks)
                 }
+                shuffleAssociations()
             }
             setInitializing(false)
         }
