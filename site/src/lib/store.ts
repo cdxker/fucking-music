@@ -172,6 +172,19 @@ export class Database {
 
         return tracks
     }
+
+    updateTrack(playlistId: PlaylistId, track: FuckingTrack): void {
+        store.setRow("tracks", track.id, {
+            id: track.id,
+            playlist_id: playlistId,
+            time_ms: track.time_ms,
+            name: track.name,
+            artists: JSON.stringify(track.artists),
+            tags: JSON.stringify(track.tags || []),
+            stream_url: JSON.stringify(track.audio),
+            next_tracks: track.next_tracks ? JSON.stringify(track.next_tracks) : "",
+        })
+    }
 }
 
 // Singleton instance
