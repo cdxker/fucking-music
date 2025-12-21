@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "../shared/types"
 import { db } from "@/lib/store"
 import { musicCache } from "@/lib/musicCache"
+import { shuffleAssociations } from "@/lib/associations"
 
 export default function PlayerLayout() {
     const [playlist, setPlaylist] = useState<FuckingPlaylist | null>(null)
@@ -80,6 +81,9 @@ export default function PlayerLayout() {
             db.insertPlaylist(data.playlist)
             db.insertTracks(data.tracks, data.playlist.id)
             db.setPlayerState({ activeTrack: data.tracks[0]?.id, trackTimestamp: 0 })
+
+            // Shuffle associations to create random left/right neighbors
+            shuffleAssociations()
 
             tracksRef.current = data.tracks
             setInitialTrackIndex(0)

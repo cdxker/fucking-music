@@ -172,6 +172,36 @@ export class Database {
 
         return tracks
     }
+
+    updateTrack(track: FuckingTrack): void {
+        const existingRow = store.getRow("tracks", track.id)
+        if (!existingRow) return
+
+        store.setRow("tracks", track.id, {
+            id: track.id,
+            playlist_id: existingRow.playlist_id as string,
+            time_ms: track.time_ms,
+            name: track.name,
+            artists: JSON.stringify(track.artists),
+            tags: JSON.stringify(track.tags || []),
+            stream_url: JSON.stringify(track.audio),
+            next_tracks: track.next_tracks ? JSON.stringify(track.next_tracks) : "",
+        })
+    }
+
+    getAllTracks(): FuckingTrack[] {
+        const tracks: FuckingTrack[] = []
+        const rowIds = store.getRowIds("tracks")
+
+        for (const rowId of rowIds) {
+            const track = this.getTrack(rowId as TrackId)
+            if (track) {
+                tracks.push(track)
+            }
+        }
+
+        return tracks
+    }
 }
 
 // Singleton instance
