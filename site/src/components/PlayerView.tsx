@@ -53,8 +53,6 @@ function PlayerView() {
             }))
     }, [currentTrack, playlist])
 
-    console.log(nextTracks)
-
     if (!playlist || !currentTrack) {
         return null
     }

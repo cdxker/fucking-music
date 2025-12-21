@@ -24,11 +24,19 @@ export interface PlayerState {
 }
 
 export const usePlayerState = (): PlayerState => {
-    const playerContext = useContext(PlayerContext);
+    const playerContext = useContext(PlayerContext)
     if (!playerContext) {
         throw new Error("usePlayerState must be used within a PlayerProvider")
     }
-    const { playlist, tracks, setPlaylistAndTracks, initialTrackIndex, initialTimeMs, pendingTrackIndex, clearPendingTrackIndex } = playerContext;
+    const {
+        playlist,
+        tracks,
+        setPlaylistAndTracks,
+        initialTrackIndex,
+        initialTimeMs,
+        pendingTrackIndex,
+        clearPendingTrackIndex,
+    } = playerContext
 
     const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
@@ -67,14 +75,12 @@ export const usePlayerState = (): PlayerState => {
         currentTrackIndexRef.current = currentTrackIndex
     }, [currentTrackIndex])
 
-    // Audio loading effect
     useEffect(() => {
         if (!currentTrack) return
-
         if (!audioRef.current) {
             audioRef.current = new Audio()
         }
-        const audio = audioRef.current
+
         let cancelled = false
 
         const loadAudio = async () => {
@@ -100,20 +106,29 @@ export const usePlayerState = (): PlayerState => {
                 return
             }
 
-            audio.src = audioUrl
-            audio.load()
+            if (audioRef.current) {
+                audioRef.current.src = audioUrl
+                audioRef.current.src = audioUrl
+                audioRef.current.load()
+            }
+        }
 
+        loadAudio().then(() => {
+            if (!audioRef.current) return
             if (
                 !initialSeekDone.current &&
                 currentTrackIndexRef.current === initialTrackIndex &&
                 initialTimeMs > 0
             ) {
                 const handleLoadedMetadata = () => {
-                    audio.currentTime = initialTimeMs / 1000
+                    if (!audioRef.current) return
+                    audioRef.current.currentTime = initialTimeMs / 1000
                     setCurrentTimeMs(initialTimeMs)
                     initialSeekDone.current = true
                 }
-                audio.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true })
+                audioRef.current.addEventListener("loadedmetadata", handleLoadedMetadata, {
+                    once: true,
+                })
             } else if (
                 initialSeekDone.current ||
                 currentTrackIndexRef.current !== initialTrackIndex
@@ -121,16 +136,15 @@ export const usePlayerState = (): PlayerState => {
                 setCurrentTimeMs(0)
             }
 
-            if (isPlayingRef.current) {
-                audio.play()
+            if (audioRef.current) {
+                if (!audioRef.current) return
+                audioRef.current.play()
+                console.log("just called play")
             }
-        }
-
-        loadAudio()
+        })
 
         return () => {
             cancelled = true
-            audio.pause()
         }
     }, [currentTrack?.id, currentTrack?.audio, initialTrackIndex, initialTimeMs])
 

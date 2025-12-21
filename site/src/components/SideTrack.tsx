@@ -24,13 +24,14 @@ export default function SideTrack({ track, playlist, position }: { track?: Fucki
     }
 
     return (
-        <div className={cn("absolute text-sm text-white top-50 origin-left w-6/12 z-0 cursor-pointer", {
+        <div className={cn("absolute text-sm text-white top-50 space-y-2 origin-left w-6/12 z-0 cursor-pointer", {
             "left-20 text-left": position === "left",
             "right-20 text-right": position === "right",
         })}
             onClick={handleClick}>
-            <img src={playlist.track_cover_uri} alt=""/>
             <h1 >{playlist.name}</h1>
+            <img src={playlist.track_cover_uri} alt=""/>
+            <h2>{track.name}</h2>
         </div>
     )
 }
