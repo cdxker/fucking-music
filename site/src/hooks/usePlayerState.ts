@@ -36,13 +36,12 @@ export const usePlayerState = (): PlayerState => {
         initialTimeMs,
         pendingTrackIndex,
         clearPendingTrackIndex,
+        audioRef,
     } = playerContext
 
     const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
     const [isPlaying, setIsPlaying] = useState(false)
-
-    const audioRef = useRef<HTMLAudioElement | null>(null)
     const initialSeekDone = useRef(false)
     const currentTimeMsRef = useRef(initialTimeMs)
     const currentTrackIndexRef = useRef(initialTrackIndex)
@@ -145,6 +144,10 @@ export const usePlayerState = (): PlayerState => {
 
         return () => {
             cancelled = true
+            if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current.src = ""
+            }
         }
     }, [currentTrack?.id, currentTrack?.audio, initialTrackIndex, initialTimeMs])
 
