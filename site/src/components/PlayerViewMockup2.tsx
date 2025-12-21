@@ -1,23 +1,33 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { db } from "@/lib/store"
 import { getAllLinkedTracks } from "@/lib/associations"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 
 const PlayerViewMockup2 = () => {
-    const [data] = useState(() => {
-        const state = db.getPlayerState()
-        if (!state) return null
+    const [data, setData] = useState<{
+        current: { playlist: FuckingPlaylist; track: FuckingTrack }
+        links: Array<{ playlist: FuckingPlaylist; track: FuckingTrack }>
+    } | null>(null)
 
-        const playlist = db.getPlaylist(state.activePlaylist)
-        const track = db.getTrack(state.activeTrack)
+    useEffect(() => {
+        const loadData = async () => {
+            await db.init()
+            const state = db.getPlayerState()
+            if (!state) return
 
-        if (!playlist || !track) return null
+            const playlist = db.getPlaylist(state.activePlaylist)
+            const track = db.getTrack(state.activeTrack)
 
-        return {
-            current: { playlist, track },
-            links: getAllLinkedTracks(state.activePlaylist, state.activeTrack),
+            if (!playlist || !track) return
+
+            setData({
+                current: { playlist, track },
+                links: getAllLinkedTracks(state.activePlaylist, state.activeTrack),
+            })
         }
-    })
+
+        loadData()
+    }, [])
 
     const navigateToTrack = (target: { playlist: FuckingPlaylist; track: FuckingTrack }) => {
         db.setPlayerState({

@@ -1,26 +1,37 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { db } from "@/lib/store"
 import { getLeftRightTracks } from "@/lib/associations"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 
 const PlayerViewMockup1 = () => {
-    const [data] = useState(() => {
-        const state = db.getPlayerState()
-        if (!state) return null
+    const [data, setData] = useState<{
+        current: { playlist: FuckingPlaylist; track: FuckingTrack }
+        left: { playlist: FuckingPlaylist; track: FuckingTrack } | null
+        right: { playlist: FuckingPlaylist; track: FuckingTrack } | null
+    } | null>(null)
 
-        const playlist = db.getPlaylist(state.activePlaylist)
-        const track = db.getTrack(state.activeTrack)
+    useEffect(() => {
+        const loadData = async () => {
+            await db.init()
+            const state = db.getPlayerState()
+            if (!state) return
 
-        if (!playlist || !track) return null
+            const playlist = db.getPlaylist(state.activePlaylist)
+            const track = db.getTrack(state.activeTrack)
 
-        const neighbors = getLeftRightTracks(state.activePlaylist, state.activeTrack)
+            if (!playlist || !track) return
 
-        return {
-            current: { playlist, track },
-            left: neighbors.left,
-            right: neighbors.right,
+            const neighbors = getLeftRightTracks(state.activePlaylist, state.activeTrack)
+
+            setData({
+                current: { playlist, track },
+                left: neighbors.left,
+                right: neighbors.right,
+            })
         }
-    })
+
+        loadData()
+    }, [])
 
     const navigateToTrack = (
         target: {
