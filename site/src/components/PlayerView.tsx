@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import * as Slider from "@radix-ui/react-slider"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { musicCache } from "@/lib/musicCache"
@@ -18,13 +18,11 @@ function PlayerView({
     tracks,
     initialTrackIndex = 0,
     initialTimeMs = 0,
-    onStateChange,
 }: {
     playlist: FuckingPlaylist
     tracks: FuckingTrack[]
     initialTrackIndex?: number
     initialTimeMs?: number
-    onStateChange?: (trackIndex: number, timeMs: number) => void
 }) {
     const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
@@ -35,15 +33,10 @@ function PlayerView({
     const currentTrackIndexRef = useRef(initialTrackIndex)
     const currentBlobUrlRef = useRef<string | null>(null)
     const isPlayingRef = useRef(isPlaying)
-    const onStateChangeRef = useRef(onStateChange)
 
     useEffect(() => {
         isPlayingRef.current = isPlaying
     }, [isPlaying])
-
-    useEffect(() => {
-        onStateChangeRef.current = onStateChange
-    }, [onStateChange])
 
     const currentTrack = tracks[currentTrackIndex]
     const totalDuration = currentTrack.time_ms
@@ -143,28 +136,28 @@ function PlayerView({
         currentTrackIndexRef.current = currentTrackIndex
     }, [currentTrackIndex])
 
+    const savePlayerState = useCallback(() => {
+        const trackId = tracks[currentTrackIndexRef.current]?.id
+        if (trackId) {
+            db.setPlayerState({ activeTrack: trackId, trackTimestamp: currentTimeMsRef.current })
+        }
+    }, [tracks])
+
     useEffect(() => {
-        if (!onStateChange) return
-
-        const interval = setInterval(() => {
-            onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current)
-        }, 5000)
-
-        onStateChange(currentTrackIndexRef.current, currentTimeMsRef.current)
+        const interval = setInterval(savePlayerState, 5000)
+        savePlayerState()
 
         return () => clearInterval(interval)
-    }, [currentTrackIndex, onStateChange])
+    }, [currentTrackIndex, savePlayerState])
 
     useEffect(() => {
         return () => {
-            if (onStateChangeRef.current) {
-                onStateChangeRef.current(currentTrackIndexRef.current, currentTimeMsRef.current)
-            }
+            savePlayerState()
             if (currentBlobUrlRef.current) {
                 URL.revokeObjectURL(currentBlobUrlRef.current)
             }
         }
-    }, [])
+    }, [savePlayerState])
 
     const togglePlayPause = () => {
         const audio = audioRef.current

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import PlayerView from "./PlayerView"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "../shared/types"
 import { db } from "@/lib/store"
 import { musicCache } from "@/lib/musicCache"
@@ -15,7 +15,6 @@ export default function PlayerLayout() {
     const [initializing, setInitializing] = useState(true)
     const [initialTrackIndex, setInitialTrackIndex] = useState(0)
     const [initialTimeMs, setInitialTimeMs] = useState(0)
-    const tracksRef = useRef<FuckingTrack[]>([])
 
     useEffect(() => {
         const init = async () => {
@@ -27,7 +26,6 @@ export default function PlayerLayout() {
                 const savedPlaylist = db.getPlaylist(playerState.lastPlaylistId)
                 const savedTracks = db.getTracks(playerState.lastPlaylistId)
                 if (savedPlaylist && savedTracks.length > 0) {
-                    tracksRef.current = savedTracks
                     const trackIndex = savedTracks.findIndex(
                         (t) => t.id === playerState.activeTrack
                     )
@@ -45,13 +43,6 @@ export default function PlayerLayout() {
         }
         init()
     }, [])
-
-    const handleStateChange = (trackIndex: number, timeMs: number) => {
-        const trackId = tracksRef.current[trackIndex]?.id
-        if (trackId) {
-            db.setPlayerState({ activeTrack: trackId, trackTimestamp: timeMs })
-        }
-    }
 
     const getApiEndpoint = (url: string): string => {
         if (url.includes("spotify.com")) {
@@ -83,7 +74,6 @@ export default function PlayerLayout() {
             db.insertTracks(data.tracks, data.playlist.id)
             db.setPlayerState({ activeTrack: data.tracks[0]?.id, trackTimestamp: 0 })
 
-            tracksRef.current = data.tracks
             setInitialTrackIndex(0)
             setInitialTimeMs(0)
             setPlaylist(data.playlist)
@@ -110,7 +100,6 @@ export default function PlayerLayout() {
                         tracks={tracks}
                         initialTrackIndex={initialTrackIndex}
                         initialTimeMs={initialTimeMs}
-                        onStateChange={handleStateChange}
                     />
                     <div className="flex justify-center mt-8">
                         <Button
