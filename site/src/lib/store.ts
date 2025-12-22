@@ -53,10 +53,10 @@ export class Database {
     }
 
     clearPlayerState(): void {
-        store.setValue("activePlaylist", "");
-        store.setValue("activeTrack", "");
-        store.setValue("lastPlaylistId", "");
-        store.setValue("trackTimestamp", "");
+        store.setValue("activePlaylist", "")
+        store.setValue("activeTrack", "")
+        store.setValue("lastPlaylistId", "")
+        store.setValue("trackTimestamp", "")
     }
 
     getPlayerState(): PlayerState | undefined {
@@ -123,7 +123,7 @@ export class Database {
                 first_track: firstTrack,
             }
         } catch (e) {
-            return null;
+            return null
         }
     }
 

@@ -47,7 +47,8 @@ function PlayerView() {
                     track !== null &&
                     playlistId !== null &&
                     playlistId !== undefined
-            ).map(([playlistId, trackId]) => ({
+            )
+            .map(([playlistId, trackId]) => ({
                 playlist: db.getPlaylist(playlistId as PlaylistId) as FuckingPlaylist,
                 track: db.getTrack(trackId as TrackId) as FuckingTrack,
             }))
@@ -59,9 +60,8 @@ function PlayerView() {
 
     return (
         <div className="flex flex-col gap-4 justify-center items-center">
+            <Header active="less" />
             <div className="max-w-2xl">
-                <Header active="less" />
-
                 <div className="mt-4 space-y-1">
                     <div className="flex gap-4 text-white/90 text-base">
                         <span>{playlist.name}</span>
@@ -116,8 +116,12 @@ function PlayerView() {
                     </Slider.Root>
 
                     <div className="flex justify-between mt-2 text-white/70 z-20 text-sm">
-                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(currentTimeMs)}</span>
-                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(totalDuration)}</span>
+                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">
+                            {formatTime(currentTimeMs)}
+                        </span>
+                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">
+                            {formatTime(totalDuration)}
+                        </span>
                     </div>
                 </div>
 

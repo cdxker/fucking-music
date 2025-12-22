@@ -1,21 +1,37 @@
+import { cn } from "@/lib/utils"
+
+const Pages = ["less", "more"]
+
 export default function Header({ active }: { active?: "less" | "more" }) {
     return (
-        <div className="flex items-center space-x-2 w-full">
-            <div className="flex flex-col">
-                <a
-                    href="/less"
-                    className={`text-xl tracking-tight hover:text-white transition-colors ${active === "less" ? "text-white" : "text-white/60"}`}
-                >
-                    less
-                </a>
-                <a
-                    href="/more"
-                    className={`text-xl tracking-tight hover:text-white transition-colors ${active === "more" ? "text-white" : "text-white/60"}`}
-                >
-                    more
-                </a>
+        <div className="flex items-center max-w-3xl space-x-2 w-full">
+            <div className="group/nav flex flex-col">
+                {Pages.map((page) => (
+                    <a key={page} href={`/${page}`} className="group/item flex items-center">
+                        <div className="w-6 flex justify-center">
+                            <img
+                                src="/public/SidewaysFork.png"
+                                alt=""
+                                className={cn(
+                                    "transition-opacity", {
+                                        "opacity-100 group-hover/nav:opacity-0 group-hover/item:!opacity-100": page === active,
+                                        "opacity-0 group-hover/item:opacity-100": page !== active
+                                    }
+                                )}
+                            />
+                        </div>
+                        <span
+                            className={cn(
+                                "text-xl tracking-tight transition-colors group-hover/item:text-white",
+                                page === active ? "text-white" : "text-white/60"
+                            )}
+                        >
+                            {page}
+                        </span>
+                    </a>
+                ))}
             </div>
-            <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight">fucking music</h1>
+            <img className="mt-5" src="/public/LogoJoined.png" alt="" />
         </div>
     )
 }
