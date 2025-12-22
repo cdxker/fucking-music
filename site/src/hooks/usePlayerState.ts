@@ -17,10 +17,16 @@ export interface PlayerState {
     currentTrack: FuckingTrack | null
     totalDuration: number
 
+    // Navigation state
+    canGoPrevious: boolean
+    canGoNext: boolean
+
     // Control functions
     togglePlayPause: () => void
     handleSeek: (value: number) => void
     handleTrackSelect: (index: number) => void
+    handlePreviousTrack: () => void
+    handleNextTrack: () => void
 }
 
 export const usePlayerState = (): PlayerState => {
@@ -51,6 +57,8 @@ export const usePlayerState = (): PlayerState => {
 
     const currentTrack = tracks.length > 0 ? tracks[currentTrackIndex] : null
     const totalDuration = currentTrack?.time_ms ?? 0
+    const canGoPrevious = currentTrackIndex > 0
+    const canGoNext = currentTrackIndex < tracks.length - 1
 
     // Reset track index when playlist changes
     useEffect(() => {
@@ -235,6 +243,18 @@ export const usePlayerState = (): PlayerState => {
         setIsPlaying(true)
     }, [])
 
+    const handlePreviousTrack = useCallback(() => {
+        if (currentTrackIndex > 0) {
+            handleTrackSelect(currentTrackIndex - 1)
+        }
+    }, [currentTrackIndex, handleTrackSelect])
+
+    const handleNextTrack = useCallback(() => {
+        if (currentTrackIndex < tracks.length - 1) {
+            handleTrackSelect(currentTrackIndex + 1)
+        }
+    }, [currentTrackIndex, tracks.length, handleTrackSelect])
+
     return {
         playlist,
         tracks,
@@ -244,8 +264,12 @@ export const usePlayerState = (): PlayerState => {
         isPlaying,
         currentTrack,
         totalDuration,
+        canGoPrevious,
+        canGoNext,
         togglePlayPause,
         handleSeek,
         handleTrackSelect,
+        handlePreviousTrack,
+        handleNextTrack,
     }
 }

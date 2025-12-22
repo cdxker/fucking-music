@@ -51,7 +51,7 @@ export function PlayerProvider({
             setPlaylist(playlist)
             setTracks(tracks)
             setPendingTrackIndex(startingTrackIndex)
-            const activeTrack = tracks[startingTrackIndex]?.id;
+            const activeTrack = tracks[startingTrackIndex]?.id
             db.setPlayerState({ lastPlaylistId: playlist.id, activeTrack, trackTimestamp: 0 })
         },
         []
