@@ -17,11 +17,7 @@ function PlayerContent() {
     if (!playerContext) {
         return null
     }
-    const {
-        playlist,
-        tracks,
-        setPlaylistAndTracks,
-    } = playerContext
+    const { playlist, tracks, setPlaylistAndTracks } = playerContext
 
     const getApiEndpoint = (url: string): string => {
         if (url.includes("spotify.com")) {
@@ -52,7 +48,11 @@ function PlayerContent() {
             db.insertPlaylist(data.playlist)
             db.insertTracks(data.tracks, data.playlist.id)
 
-            setPlaylistAndTracks({ playlist: data.playlist, tracks: data.tracks, startingTrackIndex: undefined })
+            setPlaylistAndTracks({
+                playlist: data.playlist,
+                tracks: data.tracks,
+                startingTrackIndex: undefined,
+            })
             setShowInput(false)
             setInputValue("")
         } catch (e) {

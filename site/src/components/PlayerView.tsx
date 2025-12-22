@@ -1,10 +1,11 @@
 import { useMemo } from "react"
-import * as Slider from "@radix-ui/react-slider"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import Header from "./Header"
 import { db } from "@/lib/store"
 import SideTrack from "./SideTrack"
 import { usePlayerState } from "@/hooks/usePlayerState"
+import { PlayerControls } from "./ui/PlayerControls"
+import { ProgressBar } from "./ui/ProgressBar"
 
 function formatTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000)
@@ -22,9 +23,13 @@ function PlayerView() {
         isPlaying,
         currentTrack,
         totalDuration,
+        canGoPrevious,
+        canGoNext,
         togglePlayPause,
         handleSeek,
         handleTrackSelect,
+        handlePreviousTrack,
+        handleNextTrack,
     } = usePlayerState()
 
     const remainingMs = useMemo(() => {
@@ -47,7 +52,8 @@ function PlayerView() {
                     track !== null &&
                     playlistId !== null &&
                     playlistId !== undefined
-            ).map(([playlistId, trackId]) => ({
+            )
+            .map(([playlistId, trackId]) => ({
                 playlist: db.getPlaylist(playlistId as PlaylistId) as FuckingPlaylist,
                 track: db.getTrack(trackId as TrackId) as FuckingTrack,
             }))
@@ -86,12 +92,6 @@ function PlayerView() {
                                 alt={`${playlist.name} album cover`}
                                 className="w-full aspect-square object-cover"
                             />
-                            <button
-                                onClick={togglePlayPause}
-                                className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
-                            >
-                                <span className="text-white text-6xl">{isPlaying ? "⏸" : "▶"}</span>
-                            </button>
                         </div>
                     </div>
                     <SideTrack
@@ -101,24 +101,22 @@ function PlayerView() {
                     />
                 </div>
 
-                <div className="mt-4 z-20">
-                    <Slider.Root
-                        className="relative flex items-center select-none touch-none w-full h-5"
-                        value={[currentTimeMs]}
-                        max={totalDuration}
-                        step={1000}
-                        onValueChange={([value]) => handleSeek(value)}
-                    >
-                        <Slider.Track className="bg-[#6B8CC7] relative grow rounded-full h-2">
-                            <Slider.Range className="absolute bg-[#3B5998] rounded-full h-full" />
-                        </Slider.Track>
-                        <Slider.Thumb className="block w-3 h-3 bg-[#E85A4F] rounded-full focus:outline-none" />
-                    </Slider.Root>
-
-                    <div className="flex justify-between mt-2 text-white/70 z-20 text-sm">
-                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(currentTimeMs)}</span>
-                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(totalDuration)}</span>
-                    </div>
+                <div className="mt-4 z-20 flex flex-col items-center gap-4">
+                    <PlayerControls
+                        isPlaying={isPlaying}
+                        onPlayPause={togglePlayPause}
+                        onPrevious={handlePreviousTrack}
+                        onNext={handleNextTrack}
+                        canGoPrevious={canGoPrevious}
+                        canGoNext={canGoNext}
+                    />
+                    <ProgressBar
+                        currentTimeMs={currentTimeMs}
+                        totalDurationMs={totalDuration}
+                        currentTimeFormatted={formatTime(currentTimeMs)}
+                        totalDurationFormatted={formatTime(totalDuration)}
+                        onSeek={handleSeek}
+                    />
                 </div>
 
                 <div className="mt-4 space-y-3 z-20">
