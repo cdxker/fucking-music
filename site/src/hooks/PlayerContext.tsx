@@ -1,11 +1,11 @@
-import { createContext, useState, useCallback, useRef, type ReactNode, type MutableRefObject } from "react"
+import { createContext, useState, useCallback, useRef, type ReactNode, type RefObject } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 import { db } from "@/lib/store"
 
 export type SetPlaylistAndTracksParams = {
     playlist: FuckingPlaylist
     tracks: FuckingTrack[]
-    startingTrackIndex: number | undefined
+    startingTrackIndex: number
 }
 
 export interface PlayerContextValue {
@@ -16,7 +16,7 @@ export interface PlayerContextValue {
     initialTimeMs: number
     pendingTrackIndex: number | null
     clearPendingTrackIndex: () => void
-    audioRef: MutableRefObject<HTMLAudioElement | null>
+    audioRef: RefObject<HTMLAudioElement | null>
 }
 
 export const PlayerContext = createContext<PlayerContextValue | null>(null)
@@ -41,17 +41,21 @@ export function PlayerProvider({
     const [pendingTrackIndex, setPendingTrackIndex] = useState<number | null>(null)
     const audioRef = useRef<HTMLAudioElement | null>(null)
 
-    const setPlaylistAndTracks = useCallback(({ playlist, tracks, startingTrackIndex }: SetPlaylistAndTracksParams) => {
-        if (audioRef.current) {
-            audioRef.current.pause()
-        }
-        setPlaylist(playlist)
-        setTracks(tracks)
-        const trackIndex = startingTrackIndex ?? 0
-        setPendingTrackIndex(trackIndex)
-        const activeTrack = tracks[trackIndex]?.id ?? tracks[0]?.id
-        db.setPlayerState({ lastPlaylistId: playlist.id, activeTrack, trackTimestamp: 0 })
-    }, [])
+    const setPlaylistAndTracks = useCallback(
+        ({ playlist, tracks, startingTrackIndex = 0 }: SetPlaylistAndTracksParams) => {
+            if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current.removeAttribute("src")
+                audioRef.current.load()
+            }
+            setPlaylist(playlist)
+            setTracks(tracks)
+            setPendingTrackIndex(startingTrackIndex)
+            const activeTrack = tracks[startingTrackIndex]?.id;
+            db.setPlayerState({ lastPlaylistId: playlist.id, activeTrack, trackTimestamp: 0 })
+        },
+        []
+    )
 
     const clearPendingTrackIndex = useCallback(() => {
         setPendingTrackIndex(null)
