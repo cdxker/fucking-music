@@ -5,3 +5,93 @@
     font-weight: 400;
     font-style: normal;
 }
+
+/* Audio bars animation for NowPlayingIndicator */
+@keyframes audio-bar-1 {
+    0%,
+    100% {
+        height: 6px;
+    }
+    50% {
+        height: 18px;
+    }
+}
+
+@keyframes audio-bar-2 {
+    0%,
+    100% {
+        height: 14px;
+    }
+    50% {
+        height: 6px;
+    }
+}
+
+@keyframes audio-bar-3 {
+    0%,
+    100% {
+        height: 10px;
+    }
+    50% {
+        height: 20px;
+    }
+}
+
+@keyframes audio-bar-4 {
+    0%,
+    100% {
+        height: 16px;
+    }
+    50% {
+        height: 8px;
+    }
+}
+
+@keyframes audio-bar-5 {
+    0%,
+    100% {
+        height: 8px;
+    }
+    50% {
+        height: 16px;
+    }
+}
+
+@keyframes audio-bar-6 {
+    0%,
+    100% {
+        height: 12px;
+    }
+    50% {
+        height: 4px;
+    }
+}
+
+.animate-audio-bar-1 {
+    animation: audio-bar-1 0.8s ease-in-out infinite;
+}
+
+.animate-audio-bar-2 {
+    animation: audio-bar-2 0.6s ease-in-out infinite;
+    animation-delay: 0.1s;
+}
+
+.animate-audio-bar-3 {
+    animation: audio-bar-3 0.7s ease-in-out infinite;
+    animation-delay: 0.2s;
+}
+
+.animate-audio-bar-4 {
+    animation: audio-bar-4 0.5s ease-in-out infinite;
+    animation-delay: 0.15s;
+}
+
+.animate-audio-bar-5 {
+    animation: audio-bar-5 0.65s ease-in-out infinite;
+    animation-delay: 0.25s;
+}
+
+.animate-audio-bar-6 {
+    animation: audio-bar-6 0.55s ease-in-out infinite;
+    animation-delay: 0.05s;
+}
