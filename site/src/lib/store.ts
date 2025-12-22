@@ -52,6 +52,13 @@ export class Database {
         initialized = true
     }
 
+    clearPlayerState(): void {
+        store.setValue("activePlaylist", "");
+        store.setValue("activeTrack", "");
+        store.setValue("lastPlaylistId", "");
+        store.setValue("trackTimestamp", "");
+    }
+
     getPlayerState(): PlayerState | undefined {
         const activePlaylist = store.getValue("activePlaylist") as string
         const activeTrack = store.getValue("activeTrack") as string
@@ -101,18 +108,22 @@ export class Database {
     }
 
     getPlaylist(playlistId: PlaylistId): FuckingPlaylist | null {
-        const row = store.getRow("playlists", playlistId)
-        if (!row || !row.id) return null
+        try {
+            const row = store.getRow("playlists", playlistId)
+            if (!row || !row.id) return null
 
-        const firstTrack = this.getTrack(row.first_track_id as TrackId)
-        if (!firstTrack) return null
+            const firstTrack = this.getTrack(row.first_track_id as TrackId)
+            if (!firstTrack) return null
 
-        return {
-            id: row.id as PlaylistId,
-            track_cover_uri: row.track_cover_uri as string,
-            name: row.name as string,
-            artists: JSON.parse((row.artists as string) || "[]"),
-            first_track: firstTrack,
+            return {
+                id: row.id as PlaylistId,
+                track_cover_uri: row.track_cover_uri as string,
+                name: row.name as string,
+                artists: JSON.parse((row.artists as string) || "[]"),
+                first_track: firstTrack,
+            }
+        } catch (e) {
+            return null;
         }
     }
 

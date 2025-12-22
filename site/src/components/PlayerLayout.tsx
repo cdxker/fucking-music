@@ -48,11 +48,10 @@ function PlayerContent() {
                 return
             }
 
-            // Save to local store
             db.insertPlaylist(data.playlist)
             db.insertTracks(data.tracks, data.playlist.id)
 
-            setPlaylistAndTracks({ playlist: data.playlist, tracks: data.tracks, startingTrackIndex: undefined })
+            setPlaylistAndTracks({ playlist: data.playlist, tracks: data.tracks, startingTrackIndex: 0 })
             setShowInput(false)
             setInputValue("")
         } catch (e) {
@@ -151,21 +150,27 @@ export default function PlayerLayout() {
             let initialTimeMs = 0
 
             if (playerState) {
-                const savedPlaylist = db.getPlaylist(playerState.lastPlaylistId)
-                const savedTracks = db.getTracks(playerState.lastPlaylistId)
-                if (savedPlaylist && savedTracks.length > 0) {
-                    const trackIndex = savedTracks.findIndex(
-                        (t) => t.id === playerState.activeTrack
-                    )
-                    if (trackIndex !== -1) {
-                        initialTrackIndex = trackIndex
-                    }
+                console.log("playerState", playerState)
+                try { 
+                    const savedPlaylist = db.getPlaylist(playerState.lastPlaylistId)
+                    const savedTracks = db.getTracks(playerState.lastPlaylistId)
+                    if (savedPlaylist && savedTracks.length > 0) {
+                        const trackIndex = savedTracks.findIndex(
+                            (t) => t.id === playerState.activeTrack
+                        )
+                        if (trackIndex !== -1) {
+                            initialTrackIndex = trackIndex
+                        }
 
-                    initialTimeMs = playerState.trackTimestamp
-                    playlist = savedPlaylist
-                    tracks = savedTracks
+                        initialTimeMs = playerState.trackTimestamp
+                        playlist = savedPlaylist
+                        tracks = savedTracks
+                    }
+                    shuffleAssociations()
+                } catch (e) {
+                    db.clearPlayerState()
+                    console.error("An issue occured loading initial state", e)
                 }
-                shuffleAssociations()
             }
 
             setInitData({ playlist, tracks, initialTrackIndex, initialTimeMs })
