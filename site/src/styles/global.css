@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../components/**/*.tsx";
+@source "../pages/**/*.astro";
 
 * {
     font-family: "DM Mono", monospace;

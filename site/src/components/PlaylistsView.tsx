@@ -49,17 +49,14 @@ export default function PlaylistsView() {
     }
 
     return (
-        <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-            <div className="max-w-2xl mx-auto">
-                <div className="mb-8">
-                    <Header active="more" />
-                </div>
-
-                <div className="space-y-4">
+        <div className="flex flex-col gap-4 items-center justify-center pt-8 pb-12 bg-[#0B0B0B]">
+            <Header active="more" />
+            <div className="max-w-2xl mx-auto w-full">
+                <div className="space-y-4 w-full">
                     {playlists.map((playlist) => (
                         <div
                             key={playlist.id}
-                            className="flex gap-4 cursor-pointer hover:bg-white/5 rounded-lg p-2 -mx-2 transition-colors"
+                            className="flex gap-4 cursor-pointer hover:bg-white/5 rounded-lg p-2 -mx-2 transition-colors w-full"
                             onClick={() => handlePlaylistClick(playlist.id)}
                         >
                             <img
