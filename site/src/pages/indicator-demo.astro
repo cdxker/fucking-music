@@ -1,0 +1,28 @@
+---
+import NowPlayingIndicatorDemo from "../components/NowPlayingIndicatorDemo"
+import "../styles/global.css"
+---
+
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Now Playing Indicator - Demo</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <main class="h-screen bg-[#0B0B0B] flex items-center justify-center">
+            <div class="text-center">
+                <h1 class="text-2xl text-white mb-8">Now Playing Indicator Demo</h1>
+                <p class="text-white/60 mb-4">The indicator appears at the bottom of the screen</p>
+                <p class="text-white/40 text-sm">Click the play/pause button to toggle animation</p>
+            </div>
+            <NowPlayingIndicatorDemo client:load />
+        </main>
+    </body>
+</html>
