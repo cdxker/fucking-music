@@ -15,7 +15,7 @@ export default function Header({ active }: { active?: "less" | "more" }) {
                     more
                 </a>
             </div>
-            <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight">fucking music</h1>
+            <h1 className="text-5xl italic text-[#4A6FA5] tracking-tight">Rotations</h1>
         </div>
     )
 }
