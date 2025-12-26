@@ -6,7 +6,7 @@ import { PlayerContext, type SetPlaylistAndTracksParams } from "./PlayerContext"
 
 export interface PlayerState {
     // Playlist state (from context)
-    playlist: FuckingPlaylist | null
+    playlist?: FuckingPlaylist
     tracks: FuckingTrack[]
     setPlaylistAndTracks: (params: SetPlaylistAndTracksParams) => void
 
@@ -34,12 +34,11 @@ export const usePlayerState = (): PlayerState => {
         setPlaylistAndTracks,
         initialTrackIndex,
         initialTimeMs,
-        pendingTrackIndex,
-        clearPendingTrackIndex,
         audioRef,
+        currentTrackIndex,
+        setCurrentTrackIndex
     } = playerContext
 
-    const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
     const [isPlaying, setIsPlaying] = useState(false)
     const initialSeekDone = useRef(false)
@@ -55,16 +54,15 @@ export const usePlayerState = (): PlayerState => {
     // Reset track index when playlist changes
     useEffect(() => {
         if (prevTracksRef.current !== tracks && tracks.length > 0) {
-            const newIndex = pendingTrackIndex ?? 0
+            const newIndex = currentTrackIndex ?? 0
             setCurrentTrackIndex(newIndex)
             setCurrentTimeMs(0)
             currentTimeMsRef.current = 0
             currentTrackIndexRef.current = newIndex
             initialSeekDone.current = true
             prevTracksRef.current = tracks
-            clearPendingTrackIndex()
         }
-    }, [tracks, pendingTrackIndex, clearPendingTrackIndex])
+    }, [tracks, currentTrackIndex])
 
     useEffect(() => {
         isPlayingRef.current = isPlaying
@@ -76,6 +74,8 @@ export const usePlayerState = (): PlayerState => {
 
     useEffect(() => {
         if (!currentTrack) return
+        if (!audioRef) return
+
         if (!audioRef.current) {
             audioRef.current = new Audio()
         }
@@ -153,6 +153,7 @@ export const usePlayerState = (): PlayerState => {
 
     // Time update and track ended handlers
     useEffect(() => {
+        if (!audioRef) return;
         const audio = audioRef.current
         if (!audio || !currentTrack) return
 
@@ -207,7 +208,7 @@ export const usePlayerState = (): PlayerState => {
     }, [savePlayerState])
 
     const togglePlayPause = useCallback(() => {
-        const audio = audioRef.current
+        const audio = audioRef?.current
         if (!audio) return
 
         if (isPlaying) {
@@ -219,7 +220,7 @@ export const usePlayerState = (): PlayerState => {
     }, [isPlaying])
 
     const handleSeek = useCallback((value: number) => {
-        const audio = audioRef.current
+        const audio = audioRef?.current
         if (!audio) return
 
         audio.currentTime = value / 1000

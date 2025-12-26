@@ -19,12 +19,12 @@ export default function SideTrack({ track, playlist, position }: { track?: Fucki
         setPlaylistAndTracks({
             playlist,
             tracks,
-            startingTrackIndex: trackIndex !== -1 ? trackIndex : undefined
+            startingTrackIndex: trackIndex !== -1 ? trackIndex : 0
         })
     }
 
     return (
-        <div className={cn("absolute opacity-25 text-sm text-white top-50 space-y-2 origin-left w-6/12 md:w-4/12 z-0 cursor-pointer", {
+        <div className={cn("absolute opacity-25 text-sm text-white top-25 space-y-2 origin-left w-6/12 md:w-4/12 z-0 cursor-pointer", {
             "left-20 text-left": position === "left",
             "right-20 text-right": position === "right",
         })}

@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback, useRef, type ReactNode, type RefObject } from "react"
+import { createContext, useState, useCallback, useRef, type ReactNode, type RefObject, type Dispatch, type SetStateAction } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 import { db } from "@/lib/store"
 
@@ -9,21 +9,29 @@ export type SetPlaylistAndTracksParams = {
 }
 
 export interface PlayerContextValue {
-    playlist: FuckingPlaylist | null
+    playlist?: FuckingPlaylist;
     tracks: FuckingTrack[]
     setPlaylistAndTracks: (params: SetPlaylistAndTracksParams) => void
     initialTrackIndex: number
     initialTimeMs: number
-    pendingTrackIndex: number | null
-    clearPendingTrackIndex: () => void
-    audioRef: RefObject<HTMLAudioElement | null>
+    audioRef?: RefObject<HTMLAudioElement | null>
+    currentTrackIndex: number
+    setCurrentTrackIndex: Dispatch<SetStateAction<number>>
 }
 
-export const PlayerContext = createContext<PlayerContextValue | null>(null)
+export const PlayerContext = createContext<PlayerContextValue>({
+    tracks: [],
+    setPlaylistAndTracks: () => {},
+    initialTrackIndex: 0,
+    initialTimeMs: 0,
+    currentTrackIndex: 0,
+    setCurrentTrackIndex: () => {},
+    audioRef: undefined
+})
 
 interface PlayerProviderProps {
     children: ReactNode
-    initialPlaylist: FuckingPlaylist | null
+    initialPlaylist?: FuckingPlaylist,
     initialTracks: FuckingTrack[]
     initialTrackIndex: number
     initialTimeMs: number
@@ -31,14 +39,14 @@ interface PlayerProviderProps {
 
 export function PlayerProvider({
     children,
-    initialPlaylist = null,
+    initialPlaylist = undefined,
     initialTracks = [],
     initialTrackIndex = 0,
     initialTimeMs = 0,
 }: PlayerProviderProps) {
-    const [playlist, setPlaylist] = useState<FuckingPlaylist | null>(initialPlaylist)
+    const [playlist, setPlaylist] = useState<FuckingPlaylist | undefined>(initialPlaylist)
     const [tracks, setTracks] = useState<FuckingTrack[]>(initialTracks)
-    const [pendingTrackIndex, setPendingTrackIndex] = useState<number | null>(null)
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const audioRef = useRef<HTMLAudioElement | null>(null)
 
     const setPlaylistAndTracks = useCallback(
@@ -50,16 +58,12 @@ export function PlayerProvider({
             }
             setPlaylist(playlist)
             setTracks(tracks)
-            setPendingTrackIndex(startingTrackIndex)
+            setCurrentTrackIndex(startingTrackIndex)
             const activeTrack = tracks[startingTrackIndex]?.id;
             db.setPlayerState({ lastPlaylistId: playlist.id, activeTrack, trackTimestamp: 0 })
         },
         []
     )
-
-    const clearPendingTrackIndex = useCallback(() => {
-        setPendingTrackIndex(null)
-    }, [])
 
     const value: PlayerContextValue = {
         playlist,
@@ -67,9 +71,9 @@ export function PlayerProvider({
         setPlaylistAndTracks,
         initialTrackIndex,
         initialTimeMs,
-        pendingTrackIndex,
-        clearPendingTrackIndex,
         audioRef,
+        currentTrackIndex,
+        setCurrentTrackIndex,
     }
 
     return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
