@@ -1,16 +1,11 @@
-import { useMemo } from "react"
-import * as Slider from "@radix-ui/react-slider"
+import { useContext, useMemo } from "react"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { db } from "@/lib/store"
 import SideTrack from "./SideTrack"
 import { usePlayerState } from "@/hooks/usePlayerState"
-
-function formatTime(ms: number): string {
-    const totalSeconds = Math.floor(ms / 1000)
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = totalSeconds % 60
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-}
+import { cn, formatTime } from "@/lib/utils"
+import { PlayerContext } from "@/hooks/PlayerContext"
+import { Waveform } from "./ui/waveform"
 
 function PlayerView() {
     const {
@@ -20,11 +15,17 @@ function PlayerView() {
         currentTimeMs,
         isPlaying,
         currentTrack,
-        totalDuration,
         togglePlayPause,
-        handleSeek,
         handleTrackSelect,
     } = usePlayerState()
+    const context = useContext(PlayerContext);
+
+    if (!context) return null;
+
+    const {
+        audioRef
+    } = context;
+
 
     const remainingMs = useMemo(() => {
         if (!currentTrack) return 0
@@ -98,28 +99,7 @@ function PlayerView() {
                         <span>{remainingMinutes} minutes left</span>
                     </div>
                 </div>
-
-                <div className="mt-4 z-20">
-                    <Slider.Root
-                        className="relative flex items-center select-none touch-none w-full h-5"
-                        value={[currentTimeMs]}
-                        max={totalDuration}
-                        step={1000}
-                        onValueChange={([value]) => handleSeek(value)}
-                    >
-                        <Slider.Track className="bg-[#6B8CC7] relative grow rounded-full h-2">
-                            <Slider.Range className="absolute bg-[#3B5998] rounded-full h-full" />
-                        </Slider.Track>
-                        <Slider.Thumb className="block w-3 h-3 bg-[#E85A4F] rounded-full focus:outline-none" />
-                    </Slider.Root>
-
-                    <div className="flex justify-between mt-2 text-white/70 z-20 text-sm">
-                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(currentTimeMs)}</span>
-                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 px-2 py-4 rounded-full">{formatTime(totalDuration)}</span>
-                    </div>
-                </div>
-
-                <div className="mt-4 space-y-3 z-20">
+                <div className="mt-4 space-y-3 z-20 -ml-6">
                     {tracks.map((track, index) => (
                         <div
                             key={track.id}
@@ -127,11 +107,11 @@ function PlayerView() {
                             onClick={() => handleTrackSelect(index)}
                         >
                             <div className="flex items-center gap-3">
-                                {index === currentTrackIndex && (
-                                    <span className="text-white text-sm">▶</span>
-                                )}
                                 <span
-                                    className={`z-20 text-base ${index === currentTrackIndex ? "text-white ml-0" : "ml-6"}`}
+                                    className={cn("z-20 text-base ml-6",
+                                        {
+                                            "text-white": index === currentTrackIndex
+                                        })}
                                 >
                                     {track.name}
                                 </span>
