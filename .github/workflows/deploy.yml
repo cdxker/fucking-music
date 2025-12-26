@@ -15,11 +15,10 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: fuckingmusic.com
+          host: rotations.locker
           username: root
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            cd /public/fucking-music/site
-            tmux send-keys -t fucking-music C-c
+            tmux send-keys -t rotations C-c
             sleep 2
-            tmux send-keys -t fucking-music "git pull && yarn build && yarn preview" Enter
+            tmux send-keys -t rotations "git pull && yarn build && yarn preview" Enter
