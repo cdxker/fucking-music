@@ -1,9 +1,13 @@
 import { usePlayerState } from "@/hooks/usePlayerState";
-import { FastForward, Pause, Play, Rewind, SkipBack, SkipForward } from "lucide-react";
+import { ArrowDown, ArrowUp, FastForward, Pause, Play, Rewind, SkipBack, SkipForward } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import * as Slider from "@radix-ui/react-slider"
 
-export const TimeSlider = () => {
+export interface TimeSliderProps {
+    expanded: boolean;
+}
+
+export const TimeSlider = ({ expanded} : TimeSliderProps) => {
     const {
         totalDuration,
         handleSeek,
@@ -13,7 +17,17 @@ export const TimeSlider = () => {
     } = usePlayerState();
 
     return (
-        <div className="bg-[#0B0B0B] flex justify-center max-w-screen z-20 sticky bottom-0">
+        <div className="bg-[#0B0B0B] flex justify-around max-w-screen z-20 sticky bottom-0">
+            <div className="my-8">
+                {!expanded && (
+                <a href="/more">
+                <ArrowUp color="#fff"/>
+                </a>)}
+                {expanded && (
+                <a href="/less">
+                <ArrowDown color="#fff"/>
+                </a>)}
+            </div>
             <div className="my-8 w-2xl">
                 <Slider.Root
                     className="relative flex items-center select-none touch-none w-full h-5"
@@ -46,6 +60,8 @@ export const TimeSlider = () => {
                     <FastForward color="#fff" />
                     <SkipForward color="#fff"/>
                 </div>
+            </div>
+            <div>
             </div>
         </div>
     );

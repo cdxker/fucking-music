@@ -1,11 +1,9 @@
-import { useContext, useMemo } from "react"
+import { useMemo } from "react"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { db } from "@/lib/store"
 import SideTrack from "./SideTrack"
 import { usePlayerState } from "@/hooks/usePlayerState"
 import { cn, formatTime } from "@/lib/utils"
-import { PlayerContext } from "@/hooks/PlayerContext"
-import { Waveform } from "./ui/waveform"
 
 function PlayerView() {
     const {
@@ -18,14 +16,6 @@ function PlayerView() {
         togglePlayPause,
         handleTrackSelect,
     } = usePlayerState()
-    const context = useContext(PlayerContext);
-
-    if (!context) return null;
-
-    const {
-        audioRef
-    } = context;
-
 
     const remainingMs = useMemo(() => {
         if (!currentTrack) return 0

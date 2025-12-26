@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import type { FuckingPlaylist, PlaylistId } from "@/shared/types"
 import { db } from "@/lib/store"
+import { TimeSlider } from "./TimeSlider"
 
 interface PlaylistWithDuration extends FuckingPlaylist {
     totalDurationMs: number
@@ -49,6 +50,7 @@ export default function PlaylistsView() {
 
     return (
         <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
+            <TimeSlider expanded />
             <div className="max-w-2xl mx-auto">
                 <div className="space-y-4">
                     {playlists.map((playlist) => (
