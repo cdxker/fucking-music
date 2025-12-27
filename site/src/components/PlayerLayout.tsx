@@ -57,20 +57,13 @@ export default function PlayerLayout({ children }: { children: ReactNode }) {
     }
 
     return (
-        <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-            <PlayerProvider
+        <PlayerProvider
                 initialPlaylist={initData.playlist}
                 initialTracks={initData.tracks}
                 initialTrackIndex={initData.initialTrackIndex}
                 initialTimeMs={initData.initialTimeMs}
             >
                 {children}
-                <PlayerView />
-                <div className="flex items-center justify-center w-full text-sm">
-                    <AddMusicButton />
-                </div>
-                    <TimeSlider expanded={false} />
-            </PlayerProvider>
-        </div>
+        </PlayerProvider>
     )
 }

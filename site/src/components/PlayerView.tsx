@@ -5,8 +5,11 @@ import SideTrack from "./SideTrack"
 import { usePlayer } from "@/hooks/PlayerContext"
 import { cn, formatTime } from "@/lib/utils"
 import { Pause, Play } from "lucide-react"
+import { AddMusicButton } from "./AddMusicButton"
+import { TimeSlider } from "./TimeSlider"
+import PlayerLayout from "./PlayerLayout"
 
-function PlayerView() {
+function MusicView() {
     const {
         playlist,
         tracks,
@@ -119,6 +122,20 @@ function PlayerView() {
             </div>
         </div>
     )
+}
+
+function PlayerView() {
+    return (
+        <PlayerLayout>
+    <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
+        <MusicView />
+        <div className="flex items-center justify-center w-full text-sm">
+            <AddMusicButton />
+        </div>
+        <TimeSlider expanded={false} />
+    </div>
+    </PlayerLayout>
+    );
 }
 
 export default PlayerView

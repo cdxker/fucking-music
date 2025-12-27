@@ -4,6 +4,7 @@ import type { FuckingPlaylist, PlaylistId } from "@/shared/types"
 import { db } from "@/lib/store"
 import { TimeSlider } from "./TimeSlider"
 import { formatDuration } from "@/lib/utils"
+import PlayerLayout from "./PlayerLayout"
 
 export default function PlaylistsView() {
     const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
@@ -32,6 +33,7 @@ export default function PlaylistsView() {
     }
 
     return (
+        <PlayerLayout>
         <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
             <TimeSlider expanded />
             <div className="max-w-2xl mx-auto">
@@ -93,5 +95,6 @@ export default function PlaylistsView() {
                 </div>
             </div>
         </div>
+        </PlayerLayout>
     )
 }

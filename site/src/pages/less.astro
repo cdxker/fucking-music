@@ -1,8 +1,15 @@
 ---
-import PlayerLayout from "../components/PlayerLayout.tsx"
+import PlayerView from "../components/PlayerView.tsx"
 import "../styles/global.css"
 ---
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
 <html>
     <head>
         <meta charset="utf-8" />
@@ -10,8 +17,8 @@ import "../styles/global.css"
         <title>Rotations</title>
     </head>
     <body>
-        <div className="w-full min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-            <PlayerLayout client:load />
+        <div class="w-full min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
+            <PlayerView client:load />
         </div>
         <script>
             if ("serviceWorker" in navigator) {
