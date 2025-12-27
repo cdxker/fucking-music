@@ -1,9 +1,6 @@
 import { db } from "./store"
 import type { FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 
-/**
- * Fisher-Yates shuffle algorithm
- */
 function shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array]
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -13,16 +10,10 @@ function shuffleArray<T>(array: T[]): T[] {
     return shuffled
 }
 
-/**
- * Picks a random element from an array
- */
 function pickRandom<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)]
 }
 
-/**
- * Finds the playlist ID that contains a given track
- */
 function findPlaylistForTrack(
     trackId: TrackId,
     tracksByPlaylist: Map<PlaylistId, FuckingTrack[]>
@@ -35,10 +26,6 @@ function findPlaylistForTrack(
     return undefined
 }
 
-/**
- * Randomly links songs in the library to create associations.
- * Guarantees each track has exactly 2 associations from 2 different albums/playlists.
- */
 export function shuffleAssociations(): void {
     console.log("Shuffling associations")
     const playlists = db.getPlaylists()

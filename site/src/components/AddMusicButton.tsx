@@ -1,6 +1,6 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
-import { PlayerContext } from "@/hooks/PlayerContext";
+import { usePlayer } from "@/hooks/PlayerContext";
 import { db } from "@/lib/store";
 
 
@@ -8,16 +8,7 @@ export const AddMusicButton = () => {
 
     const [showInput, setShowInput] = useState(false)
     const [inputValue, setInputValue] = useState("")
-    const playerContext = useContext(PlayerContext)
-
-
-    if (!playerContext) {
-        return null
-    }
-
-    const {
-        setPlaylistAndTracks,
-    } = playerContext;
+    const { setPlaylistAndTracks } = usePlayer()
 
     const getApiEndpoint = (url: string): string => {
         if (url.includes("spotify.com")) {

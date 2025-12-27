@@ -59,13 +59,11 @@ export class MusicCache {
     }
 
     async getOrFetch(trackId: TrackId, streamUrl: string): Promise<string> {
-        // Try to get from cache first
         const cached = await this.getAudio(trackId)
         if (cached) {
             return URL.createObjectURL(cached)
         }
 
-        // Fetch via backend proxy to avoid CORS issues
         const proxyUrl = `/api/audio/proxy?url=${encodeURIComponent(streamUrl)}`
         const response = await fetch(proxyUrl)
         if (!response.ok) {
@@ -74,7 +72,6 @@ export class MusicCache {
 
         const blob = await response.blob()
 
-        // Cache for future use
         await this.cacheAudio(trackId, blob)
 
         return URL.createObjectURL(blob)

@@ -1,31 +1,14 @@
 import PlayerView from "./PlayerView"
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "../shared/types"
 import { db } from "@/lib/store"
 import { musicCache } from "@/lib/musicCache"
 import { shuffleAssociations } from "@/lib/associations"
-import { PlayerContext, PlayerProvider } from "@/hooks/PlayerContext"
+import { PlayerProvider } from "@/hooks/PlayerContext"
 import { AddMusicButton } from "./AddMusicButton"
 import { TimeSlider } from "./TimeSlider"
 
-function PlayerContent() {
-    const playerContext = useContext(PlayerContext)
-
-    if (!playerContext) {
-        return null
-    }
-
-    return (
-        <>
-            <PlayerView />
-            <div className="flex items-center justify-center w-full text-sm">
-                <AddMusicButton />
-            </div>
-        </>
-    )
-}
-
-export default function PlayerLayout() {
+export default function PlayerLayout({ children }: { children: ReactNode }) {
     const [initData, setInitData] = useState<{
         playlist?: FuckingPlaylist
         tracks: FuckingTrack[]
@@ -74,16 +57,13 @@ export default function PlayerLayout() {
     }
 
     return (
-        <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-            <PlayerProvider
+        <PlayerProvider
                 initialPlaylist={initData.playlist}
                 initialTracks={initData.tracks}
                 initialTrackIndex={initData.initialTrackIndex}
                 initialTimeMs={initData.initialTimeMs}
             >
-                <PlayerContent />
-                <TimeSlider />
-            </PlayerProvider>
-        </div>
+                {children}
+        </PlayerProvider>
     )
 }

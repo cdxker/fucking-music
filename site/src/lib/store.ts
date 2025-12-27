@@ -107,12 +107,16 @@ export class Database {
         const firstTrack = this.getTrack(row.first_track_id as TrackId)
         if (!firstTrack) return null
 
+        const tracks = this.getTracks(playlistId)
+        const totalDurationMs = tracks.reduce((acc, track) => acc + track.time_ms, 0)
+
         return {
             id: row.id as PlaylistId,
             track_cover_uri: row.track_cover_uri as string,
             name: row.name as string,
             artists: JSON.parse((row.artists as string) || "[]"),
             first_track: firstTrack,
+            totalDurationMs,
         }
     }
 

@@ -1,4 +1,4 @@
-import { usePlayerState } from "@/hooks/usePlayerState";
+import { usePlayer } from "@/hooks/PlayerContext";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/store";
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types";
@@ -7,7 +7,7 @@ import type { FuckingPlaylist, FuckingTrack } from "@/shared/types";
 export default function SideTrack({ track, playlist, position }: { track?: FuckingTrack, playlist?: FuckingPlaylist, position: "left" | "right" }) {
     const {
         setPlaylistAndTracks
-    } = usePlayerState()
+    } = usePlayer()
 
     if (!track || !playlist) {
         return null

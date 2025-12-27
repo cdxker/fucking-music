@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
+export function formatDuration(ms: number): string {
+    const minutes = Math.round(ms / 60000)
+    return `${minutes} minutes`
+}
+
 
 export function formatTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000)

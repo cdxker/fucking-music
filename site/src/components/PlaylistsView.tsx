@@ -3,33 +3,17 @@ import { Button } from "@/components/ui/button"
 import type { FuckingPlaylist, PlaylistId } from "@/shared/types"
 import { db } from "@/lib/store"
 import { TimeSlider } from "./TimeSlider"
-
-interface PlaylistWithDuration extends FuckingPlaylist {
-    totalDurationMs: number
-}
-
-function formatDuration(ms: number): string {
-    const minutes = Math.round(ms / 60000)
-    return `${minutes} minutes`
-}
+import { formatDuration } from "@/lib/utils"
+import PlayerLayout from "./PlayerLayout"
 
 export default function PlaylistsView() {
-    const [playlists, setPlaylists] = useState<PlaylistWithDuration[]>([])
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
     const [initializing, setInitializing] = useState(true)
 
     useEffect(() => {
         const init = async () => {
             await db.init()
-            const allPlaylists = db.getPlaylists()
-
-            // Calculate total duration for each playlist
-            const playlistsWithDuration: PlaylistWithDuration[] = allPlaylists.map((playlist) => {
-                const tracks = db.getTracks(playlist.id)
-                const totalDurationMs = tracks.reduce((acc, track) => acc + track.time_ms, 0)
-                return { ...playlist, totalDurationMs }
-            })
-
-            setPlaylists(playlistsWithDuration)
+            setPlaylists(db.getPlaylists())
             setInitializing(false)
         }
         init()
@@ -49,6 +33,7 @@ export default function PlaylistsView() {
     }
 
     return (
+        <PlayerLayout>
         <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
             <TimeSlider expanded />
             <div className="max-w-2xl mx-auto">
@@ -110,5 +95,6 @@ export default function PlaylistsView() {
                 </div>
             </div>
         </div>
+        </PlayerLayout>
     )
 }
