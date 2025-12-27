@@ -80,12 +80,16 @@ class TestDatabase {
         const firstTrack = this.getTrack(row.first_track_id as TrackId)
         if (!firstTrack) return null
 
+        const tracks = this.getTracksByPlaylist(playlistId)
+        const totalDurationMs = tracks.reduce((acc, t) => acc + t.time_ms, 0)
+
         return {
             id: row.id as PlaylistId,
             track_cover_uri: row.track_cover_uri as string,
             name: row.name as string,
             artists: JSON.parse((row.artists as string) || "[]"),
             first_track: firstTrack,
+            totalDurationMs,
         }
     }
 
@@ -184,6 +188,7 @@ const mockPlaylist: FuckingPlaylistWithTracks = {
     name: "Test Album",
     artists: ["Artist 1"],
     first_track: mockTrack1,
+    totalDurationMs: 420000,
     tracks: [mockTrack1, mockTrack2],
 }
 
@@ -271,6 +276,7 @@ describe("TinyBase Store", () => {
                     artists: ["Another Artist"],
                     audio: { type: "stream", url: "https://example.com/track3.mp3" },
                 },
+                totalDurationMs: 200000,
                 tracks: [
                     {
                         id: "track-3" as TrackId,

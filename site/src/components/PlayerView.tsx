@@ -2,8 +2,9 @@ import { useMemo } from "react"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { db } from "@/lib/store"
 import SideTrack from "./SideTrack"
-import { usePlayerState } from "@/hooks/usePlayerState"
+import { usePlayer } from "@/hooks/PlayerContext"
 import { cn, formatTime } from "@/lib/utils"
+import { Pause, Play } from "lucide-react"
 
 function PlayerView() {
     const {
@@ -15,7 +16,7 @@ function PlayerView() {
         currentTrack,
         togglePlayPause,
         handleTrackSelect,
-    } = usePlayerState()
+    } = usePlayer()
 
     const remainingMs = useMemo(() => {
         if (!currentTrack) return 0
@@ -68,9 +69,14 @@ function PlayerView() {
                         />
                         <button
                             onClick={togglePlayPause}
-                            className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
+                            className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
                         >
-                            <span className="text-white text-6xl">{isPlaying ? "⏸" : "▶"}</span>
+                        {!isPlaying && (
+                            <Play color="#fff" size="50" />
+                        )}
+                        {isPlaying && (
+                            <Pause color="#fff" size="50" />
+                        )}
                         </button>
                     </div>
                 </div>

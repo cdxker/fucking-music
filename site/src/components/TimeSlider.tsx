@@ -1,4 +1,4 @@
-import { usePlayerState } from "@/hooks/usePlayerState";
+import { usePlayer } from "@/hooks/PlayerContext";
 import { ArrowDown, ArrowUp, FastForward, Pause, Play, Rewind, SkipBack, SkipForward } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import * as Slider from "@radix-ui/react-slider"
@@ -14,7 +14,7 @@ export const TimeSlider = ({ expanded} : TimeSliderProps) => {
         currentTimeMs,
         isPlaying,
         togglePlayPause
-    } = usePlayerState();
+    } = usePlayer();
 
     return (
         <div className="bg-[#0B0B0B] flex justify-around max-w-screen z-20 sticky bottom-0">

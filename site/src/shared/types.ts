@@ -6,6 +6,7 @@ export interface FuckingPlaylist {
     name: string
     artists: string[]
     first_track: FuckingTrack
+    totalDurationMs: number
 }
 
 export type TrackId = `track-${string}`
