@@ -1,12 +1,38 @@
 import { useEffect, useState } from "react"
 import PlayerLayout from "./PlayerLayout"
-import type { SpotifyPlaylist, SpotifyPlaylistsResponse, SpotifyUserProfile } from "@/shared/types"
+import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer"
+import type {
+    SpotifyPlaylist,
+    SpotifyPlaylistsResponse,
+    SpotifyPlaylistTracksResponse,
+    SpotifyTrack,
+    SpotifyUserProfile,
+} from "@/shared/types"
+
+function formatDuration(ms: number): string {
+    const minutes = Math.floor(ms / 60000)
+    const seconds = Math.floor((ms % 60000) / 1000)
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`
+}
 
 const SpotifyView = () => {
     const [user, setUser] = useState<SpotifyUserProfile | null>(null)
     const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([])
+    const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null)
+    const [tracks, setTracks] = useState<SpotifyTrack[]>([])
     const [loading, setLoading] = useState(true)
+    const [tracksLoading, setTracksLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    const {
+        isReady,
+        isPaused,
+        currentTrack,
+        playPlaylist,
+        togglePlay,
+        skipNext,
+        skipPrevious,
+    } = useSpotifyPlayer()
 
     useEffect(() => {
         const fetchData = async () => {
@@ -38,6 +64,37 @@ const SpotifyView = () => {
         fetchData()
     }, [])
 
+    const handlePlaylistClick = async (playlist: SpotifyPlaylist) => {
+        setSelectedPlaylist(playlist)
+        setTracksLoading(true)
+        setTracks([])
+
+        try {
+            const res = await fetch(`/api/spotify/playlists/${playlist.id}/tracks?limit=50`)
+            if (!res.ok) throw new Error("Failed to fetch tracks")
+
+            const data: SpotifyPlaylistTracksResponse = await res.json()
+            const trackList = data.items
+                .filter((item) => item.track && !item.track.is_local)
+                .map((item) => item.track as SpotifyTrack)
+            setTracks(trackList)
+        } catch (err) {
+            console.error("Failed to load tracks:", err)
+        } finally {
+            setTracksLoading(false)
+        }
+    }
+
+    const handleTrackClick = async (track: SpotifyTrack) => {
+        if (!selectedPlaylist || !isReady) return
+        await playPlaylist(selectedPlaylist.uri, track.uri)
+    }
+
+    const handleBackToPlaylists = () => {
+        setSelectedPlaylist(null)
+        setTracks([])
+    }
+
     if (loading) {
         return (
             <PlayerLayout>
@@ -60,57 +117,186 @@ const SpotifyView = () => {
 
     return (
         <PlayerLayout>
-            <div className="min-h-screen bg-[#0B0B0B] text-white p-8">
+            <div className="min-h-screen bg-[#0B0B0B] text-white p-8 pb-32">
                 <div className="max-w-6xl mx-auto">
+                    {/* Header */}
                     <div className="flex items-center gap-4 mb-8">
-                        {user?.images?.[0]?.url && (
-                            <img
-                                src={user.images[0].url}
-                                alt={user.display_name || "Profile"}
-                                className="w-12 h-12 rounded-full"
-                            />
+                        {selectedPlaylist ? (
+                            <>
+                                <button
+                                    onClick={handleBackToPlaylists}
+                                    className="text-white/50 hover:text-white transition-colors"
+                                >
+                                    &larr; Back
+                                </button>
+                                {selectedPlaylist.images?.[0]?.url && (
+                                    <img
+                                        src={selectedPlaylist.images[0].url}
+                                        alt={selectedPlaylist.name}
+                                        className="w-16 h-16 rounded"
+                                    />
+                                )}
+                                <div>
+                                    <h1 className="text-2xl font-bold">{selectedPlaylist.name}</h1>
+                                    <p className="text-white/50">{selectedPlaylist.tracks.total} tracks</p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {user?.images?.[0]?.url && (
+                                    <img
+                                        src={user.images[0].url}
+                                        alt={user.display_name || "Profile"}
+                                        className="w-12 h-12 rounded-full"
+                                    />
+                                )}
+                                <div>
+                                    <h1 className="text-2xl font-bold">
+                                        {user?.display_name || user?.id}'s Playlists
+                                    </h1>
+                                    <p className="text-white/50">{playlists.length} playlists</p>
+                                </div>
+                            </>
                         )}
-                        <div>
-                            <h1 className="text-2xl font-bold">
-                                {user?.display_name || user?.id}'s Playlists
-                            </h1>
-                            <p className="text-white/50">{playlists.length} playlists</p>
-                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {playlists.map((playlist) => (
-                            <a
-                                key={playlist.id}
-                                href={playlist.external_urls.spotify}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-colors"
-                            >
-                                <div className="aspect-square mb-4 bg-white/10 rounded overflow-hidden">
-                                    {playlist.images?.[0]?.url ? (
+                    {/* Player status */}
+                    {!isReady && (
+                        <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-sm">
+                            Connecting to Spotify... (Requires Spotify Premium)
+                        </div>
+                    )}
+
+                    {/* Content */}
+                    {selectedPlaylist ? (
+                        // Track list
+                        <div className="space-y-1">
+                            {tracksLoading ? (
+                                <p className="text-white/50">Loading tracks...</p>
+                            ) : (
+                                tracks.map((track, index) => (
+                                    <button
+                                        key={`${track.id}-${index}`}
+                                        onClick={() => handleTrackClick(track)}
+                                        disabled={!isReady}
+                                        className={`w-full flex items-center gap-4 p-3 rounded hover:bg-white/10 transition-colors text-left ${
+                                            currentTrack?.uri === track.uri ? "bg-white/10" : ""
+                                        } ${!isReady ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    >
+                                        <span className="text-white/30 w-6 text-right text-sm">
+                                            {index + 1}
+                                        </span>
                                         <img
-                                            src={playlist.images[0].url}
-                                            alt={playlist.name}
-                                            className="w-full h-full object-cover"
+                                            src={track.album.images?.[2]?.url || track.album.images?.[0]?.url}
+                                            alt={track.album.name}
+                                            className="w-10 h-10 rounded"
                                         />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-white/30">
-                                            No Image
+                                        <div className="flex-1 min-w-0">
+                                            <p
+                                                className={`truncate ${
+                                                    currentTrack?.uri === track.uri
+                                                        ? "text-green-400"
+                                                        : "text-white"
+                                                }`}
+                                            >
+                                                {track.name}
+                                            </p>
+                                            <p className="text-sm text-white/50 truncate">
+                                                {track.artists.map((a) => a.name).join(", ")}
+                                            </p>
                                         </div>
-                                    )}
-                                </div>
-                                <h3 className="font-medium truncate group-hover:text-green-400 transition-colors">
-                                    {playlist.name}
-                                </h3>
-                                <p className="text-sm text-white/50 truncate">
-                                    {playlist.tracks.total} tracks
-                                </p>
-                            </a>
-                        ))}
-                    </div>
+                                        <span className="text-white/30 text-sm">
+                                            {formatDuration(track.duration_ms)}
+                                        </span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    ) : (
+                        // Playlist grid
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            {playlists.map((playlist) => (
+                                <button
+                                    key={playlist.id}
+                                    onClick={() => handlePlaylistClick(playlist)}
+                                    className="group bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-colors text-left"
+                                >
+                                    <div className="aspect-square mb-4 bg-white/10 rounded overflow-hidden">
+                                        {playlist.images?.[0]?.url ? (
+                                            <img
+                                                src={playlist.images[0].url}
+                                                alt={playlist.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-white/30">
+                                                No Image
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3 className="font-medium truncate group-hover:text-green-400 transition-colors">
+                                        {playlist.name}
+                                    </h3>
+                                    <p className="text-sm text-white/50 truncate">
+                                        {playlist.tracks.total} tracks
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Player bar */}
+            {currentTrack && (
+                <div className="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-white/10 p-4">
+                    <div className="max-w-6xl mx-auto flex items-center gap-4">
+                        <img
+                            src={currentTrack.album.images?.[2]?.url || currentTrack.album.images?.[0]?.url}
+                            alt={currentTrack.album.name}
+                            className="w-14 h-14 rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-white truncate">{currentTrack.name}</p>
+                            <p className="text-sm text-white/50 truncate">
+                                {currentTrack.artists.map((a) => a.name).join(", ")}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={skipPrevious}
+                                className="text-white/70 hover:text-white transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={togglePlay}
+                                className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform"
+                            >
+                                {isPaused ? (
+                                    <svg className="w-5 h-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                                    </svg>
+                                )}
+                            </button>
+                            <button
+                                onClick={skipNext}
+                                className="text-white/70 hover:text-white transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </PlayerLayout>
     )
 }

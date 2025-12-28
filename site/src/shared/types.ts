@@ -129,3 +129,52 @@ export interface SpotifyPlaylistsResponse {
     total: number
     items: SpotifyPlaylist[]
 }
+
+export interface SpotifyArtist {
+    id: string
+    name: string
+    uri: string
+    href: string
+    external_urls: { spotify: string }
+}
+
+export interface SpotifyAlbum {
+    id: string
+    name: string
+    uri: string
+    href: string
+    images: SpotifyImage[]
+    release_date: string
+    artists: SpotifyArtist[]
+    external_urls: { spotify: string }
+}
+
+export interface SpotifyTrack {
+    id: string
+    name: string
+    uri: string
+    href: string
+    duration_ms: number
+    track_number: number
+    artists: SpotifyArtist[]
+    album: SpotifyAlbum
+    external_urls: { spotify: string }
+    is_local: boolean
+}
+
+export interface SpotifyPlaylistTrackItem {
+    added_at: string
+    added_by: { id: string }
+    is_local: boolean
+    track: SpotifyTrack | null
+}
+
+export interface SpotifyPlaylistTracksResponse {
+    href: string
+    limit: number
+    next: string | null
+    offset: number
+    previous: string | null
+    total: number
+    items: SpotifyPlaylistTrackItem[]
+}

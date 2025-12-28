@@ -17,7 +17,7 @@ export const GET: APIRoute = async () => {
         return new Response("Missing Spotify configuration", { status: 500 })
     }
 
-    const scope = "streaming user-read-email user-read-private playlist-read-private playlist-read-collaborative"
+    const scope = "streaming user-read-email user-read-private playlist-read-private playlist-read-collaborative user-modify-playback-state"
     const state = generateRandomString(16)
 
     const params = new URLSearchParams({
