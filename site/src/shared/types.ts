@@ -57,3 +57,75 @@ export interface PlayerState {
     trackTimestamp: number
     lastPlaylistId: PlaylistId
 }
+
+export interface SpotifyImage {
+    url: string
+    height: number | null
+    width: number | null
+}
+
+export interface SpotifyUserProfile {
+    country: string
+    display_name: string | null
+    email: string
+    explicit_content: {
+        filter_enabled: boolean
+        filter_locked: boolean
+    }
+    external_urls: {
+        spotify: string
+    }
+    followers: {
+        href: string | null
+        total: number
+    }
+    href: string
+    id: string
+    images: SpotifyImage[]
+    product: string
+    type: string
+    uri: string
+}
+
+export interface SpotifyTokenResponse {
+    access_token: string
+    token_type: string
+    expires_in: number
+    refresh_token: string
+    scope: string
+}
+
+export interface SpotifyPlaylistOwner {
+    display_name: string | null
+    external_urls: { spotify: string }
+    href: string
+    id: string
+    type: string
+    uri: string
+}
+
+export interface SpotifyPlaylist {
+    collaborative: boolean
+    description: string | null
+    external_urls: { spotify: string }
+    href: string
+    id: string
+    images: SpotifyImage[]
+    name: string
+    owner: SpotifyPlaylistOwner
+    public: boolean | null
+    snapshot_id: string
+    tracks: { href: string; total: number }
+    type: string
+    uri: string
+}
+
+export interface SpotifyPlaylistsResponse {
+    href: string
+    limit: number
+    next: string | null
+    offset: number
+    previous: string | null
+    total: number
+    items: SpotifyPlaylist[]
+}

@@ -2,9 +2,10 @@ import { useEffect, useState } from "react"
 import { AddMusicButton } from "./AddMusicButton"
 import { Button } from "./ui/button"
 import PlayerLayout from "./PlayerLayout"
+import type { SpotifyUserProfile } from "@/shared/types"
 
 const OnboardingView = () => {
-    const [spotifyUser, setSpotifyUser] = useState<string | null>(null)
+    const [spotifyUser, setSpotifyUser] = useState<SpotifyUserProfile | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -18,7 +19,7 @@ const OnboardingView = () => {
 
         fetch("/api/spotify/me")
             .then((res) => res.json())
-            .then((data: { user: string | null }) => {
+            .then((data: { user: SpotifyUserProfile | null }) => {
                 setSpotifyUser(data.user)
                 setLoading(false)
             })
@@ -36,7 +37,9 @@ const OnboardingView = () => {
                     {loading ? (
                         <p className="text-white/50">...</p>
                     ) : spotifyUser ? (
-                        <p className="text-green-400">Connected as {spotifyUser}</p>
+                        <p className="text-green-400">
+                            Connected as {spotifyUser.display_name || spotifyUser.id}
+                        </p>
                     ) : (
                         <Button
                             variant="outline"
