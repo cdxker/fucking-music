@@ -5,6 +5,7 @@ import { db } from "@/lib/store"
 import { TimeSlider } from "./TimeSlider"
 import { formatDuration } from "@/lib/utils"
 import PlayerLayout from "./PlayerLayout"
+import { AddMusicButton } from "./AddMusicButton"
 
 export default function PlaylistsView() {
     const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
@@ -21,10 +22,6 @@ export default function PlaylistsView() {
 
     const handlePlaylistClick = (playlistId: PlaylistId) => {
         db.setPlayerState({ lastPlaylistId: playlistId })
-        window.location.href = "/player"
-    }
-
-    const handleAddMusic = () => {
         window.location.href = "/player"
     }
 
@@ -84,14 +81,7 @@ export default function PlaylistsView() {
                 )}
 
                 <div className="flex justify-center mt-12">
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        className="text-white/70"
-                        onClick={handleAddMusic}
-                    >
-                        Add Music
-                    </Button>
+                    <AddMusicButton />
                 </div>
             </div>
         </div>
