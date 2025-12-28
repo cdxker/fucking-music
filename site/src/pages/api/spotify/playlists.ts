@@ -1,29 +1,15 @@
 import type { APIRoute } from "astro"
-import type { SpotifyPlaylistsResponse } from "../../../shared/types"
-
-function parseCookies(cookieHeader: string | null): Record<string, string> {
-    if (!cookieHeader) return {}
-    return Object.fromEntries(
-        cookieHeader.split(";").map((cookie) => {
-            const [key, ...vals] = cookie.trim().split("=")
-            return [key, vals.join("=")]
-        })
-    )
-}
+import type { SpotifyPlaylistsResponse } from "@/shared/types"
+import { getAccessToken, jsonResponse, errorResponse, parsePaginationParams } from "@/lib/server"
 
 export const GET: APIRoute = async ({ request, url }) => {
-    const cookies = parseCookies(request.headers.get("cookie"))
-    const accessToken = cookies.spotify_access_token
+    const accessToken = getAccessToken(request)
 
     if (!accessToken) {
-        return new Response(JSON.stringify({ error: "Not authenticated" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-        })
+        return errorResponse("Not authenticated", 401)
     }
 
-    const limit = url.searchParams.get("limit") || "50"
-    const offset = url.searchParams.get("offset") || "0"
+    const { limit, offset } = parsePaginationParams(url)
 
     const playlistsResponse = await fetch(
         `https://api.spotify.com/v1/me/playlists?limit=${limit}&offset=${offset}`,
@@ -35,18 +21,9 @@ export const GET: APIRoute = async ({ request, url }) => {
     )
 
     if (!playlistsResponse.ok) {
-        const errorText = await playlistsResponse.text()
-        console.error("Failed to fetch playlists:", errorText)
-        return new Response(JSON.stringify({ error: "Failed to fetch playlists" }), {
-            status: playlistsResponse.status,
-            headers: { "Content-Type": "application/json" },
-        })
+        return errorResponse("Failed to fetch playlists", playlistsResponse.status)
     }
 
     const playlists: SpotifyPlaylistsResponse = await playlistsResponse.json()
-
-    return new Response(JSON.stringify(playlists), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-    })
+    return jsonResponse(playlists)
 }

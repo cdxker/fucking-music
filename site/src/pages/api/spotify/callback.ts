@@ -1,8 +1,6 @@
 import type { APIRoute } from "astro"
-import type { SpotifyTokenResponse, SpotifyUserProfile } from "../../../shared/types"
-
-const ONE_YEAR_SECONDS = 31536000
-const COOKIE_OPTIONS = `Path=/; HttpOnly; SameSite=Lax; Max-Age=${ONE_YEAR_SECONDS}`
+import type { SpotifyTokenResponse, SpotifyUserProfile } from "@/shared/types"
+import { COOKIE_OPTIONS } from "@/lib/server"
 
 export const GET: APIRoute = async ({ url }) => {
     const code = url.searchParams.get("code")
@@ -40,8 +38,6 @@ export const GET: APIRoute = async ({ url }) => {
         })
 
         if (!tokenResponse.ok) {
-            const errorText = await tokenResponse.text()
-            console.error("Token exchange failed:", errorText)
             return Response.redirect(`${baseUrl}/onboarding?spotify_error=token_exchange`, 302)
         }
 
@@ -54,7 +50,6 @@ export const GET: APIRoute = async ({ url }) => {
         })
 
         if (!userResponse.ok) {
-            console.error("User profile fetch failed:", await userResponse.text())
             return Response.redirect(`${baseUrl}/onboarding?spotify_error=user_fetch`, 302)
         }
 
@@ -69,8 +64,7 @@ export const GET: APIRoute = async ({ url }) => {
                 ["Set-Cookie", `spotify_user=${encodeURIComponent(JSON.stringify(userData))}; ${COOKIE_OPTIONS}`],
             ],
         })
-    } catch (err) {
-        console.error("Spotify callback error:", err)
+    } catch {
         return Response.redirect(`${baseUrl}/onboarding?spotify_error=unknown`, 302)
     }
 }

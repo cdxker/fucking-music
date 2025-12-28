@@ -10,6 +10,7 @@ import type {
 } from "@/shared/types"
 
 function formatDuration(ms: number): string {
+    if (!Number.isFinite(ms) || ms < 0) return "0:00"
     const minutes = Math.floor(ms / 60000)
     const seconds = Math.floor((ms % 60000) / 1000)
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
@@ -68,6 +69,7 @@ const SpotifyView = () => {
         setSelectedPlaylist(playlist)
         setTracksLoading(true)
         setTracks([])
+        setError(null)
 
         try {
             const res = await fetch(`/api/spotify/playlists/${playlist.id}/tracks?limit=50`)
@@ -79,7 +81,7 @@ const SpotifyView = () => {
                 .map((item) => item.track as SpotifyTrack)
             setTracks(trackList)
         } catch (err) {
-            console.error("Failed to load tracks:", err)
+            setError(err instanceof Error ? err.message : "Failed to load tracks")
         } finally {
             setTracksLoading(false)
         }
@@ -87,7 +89,11 @@ const SpotifyView = () => {
 
     const handleTrackClick = async (track: SpotifyTrack) => {
         if (!selectedPlaylist || !isReady) return
-        await playPlaylist(selectedPlaylist.uri, track.uri)
+        try {
+            await playPlaylist(selectedPlaylist.uri, track.uri)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to play track")
+        }
     }
 
     const handleBackToPlaylists = () => {
@@ -119,7 +125,6 @@ const SpotifyView = () => {
         <PlayerLayout>
             <div className="min-h-screen bg-[#0B0B0B] text-white p-8 pb-32">
                 <div className="max-w-6xl mx-auto">
-                    {/* Header */}
                     <div className="flex items-center gap-4 mb-8">
                         {selectedPlaylist ? (
                             <>
@@ -152,7 +157,7 @@ const SpotifyView = () => {
                                 )}
                                 <div>
                                     <h1 className="text-2xl font-bold">
-                                        {user?.display_name || user?.id}'s Playlists
+                                        {user?.display_name || user?.id}&apos;s Playlists
                                     </h1>
                                     <p className="text-white/50">{playlists.length} playlists</p>
                                 </div>
@@ -160,23 +165,20 @@ const SpotifyView = () => {
                         )}
                     </div>
 
-                    {/* Player status */}
                     {!isReady && (
                         <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-sm">
                             Connecting to Spotify... (Requires Spotify Premium)
                         </div>
                     )}
 
-                    {/* Content */}
                     {selectedPlaylist ? (
-                        // Track list
                         <div className="space-y-1">
                             {tracksLoading ? (
                                 <p className="text-white/50">Loading tracks...</p>
                             ) : (
                                 tracks.map((track, index) => (
                                     <button
-                                        key={`${track.id}-${index}`}
+                                        key={track.id}
                                         onClick={() => handleTrackClick(track)}
                                         disabled={!isReady}
                                         className={`w-full flex items-center gap-4 p-3 rounded hover:bg-white/10 transition-colors text-left ${
@@ -213,7 +215,6 @@ const SpotifyView = () => {
                             )}
                         </div>
                     ) : (
-                        // Playlist grid
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                             {playlists.map((playlist) => (
                                 <button
@@ -247,7 +248,6 @@ const SpotifyView = () => {
                 </div>
             </div>
 
-            {/* Player bar */}
             {currentTrack && (
                 <div className="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-white/10 p-4">
                     <div className="max-w-6xl mx-auto flex items-center gap-4">
