@@ -1,18 +1,5 @@
 import type { APIRoute } from "astro"
-
-interface SpotifyTokenResponse {
-    access_token: string
-    token_type: string
-    expires_in: number
-    refresh_token: string
-    scope: string
-}
-
-interface SpotifyUserProfile {
-    display_name: string
-    email: string
-    id: string
-}
+import type { SpotifyTokenResponse, SpotifyUserProfile } from "../../../shared/types"
 
 const ONE_YEAR_SECONDS = 31536000
 const COOKIE_OPTIONS = `Path=/; HttpOnly; SameSite=Lax; Max-Age=${ONE_YEAR_SECONDS}`
@@ -72,7 +59,6 @@ export const GET: APIRoute = async ({ url }) => {
         }
 
         const userData: SpotifyUserProfile = await userResponse.json()
-        const userName = userData.display_name || userData.id
 
         return new Response(null, {
             status: 302,
@@ -80,7 +66,7 @@ export const GET: APIRoute = async ({ url }) => {
                 ["Location", `${baseUrl}/onboarding`],
                 ["Set-Cookie", `spotify_access_token=${tokenData.access_token}; ${COOKIE_OPTIONS}`],
                 ["Set-Cookie", `spotify_refresh_token=${tokenData.refresh_token}; ${COOKIE_OPTIONS}`],
-                ["Set-Cookie", `spotify_user=${encodeURIComponent(userName)}; ${COOKIE_OPTIONS}`],
+                ["Set-Cookie", `spotify_user=${encodeURIComponent(JSON.stringify(userData))}; ${COOKIE_OPTIONS}`],
             ],
         })
     } catch (err) {
