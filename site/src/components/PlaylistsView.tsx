@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import type { FuckingPlaylist, PlaylistId } from "@/shared/types"
 import { db } from "@/lib/store"
 import { TimeSlider } from "./TimeSlider"
@@ -9,13 +8,11 @@ import { AddMusicButton } from "./AddMusicButton"
 
 export default function PlaylistsView() {
     const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
-    const [initializing, setInitializing] = useState(true)
 
     useEffect(() => {
         const init = async () => {
             await db.init()
             setPlaylists(db.getPlaylists())
-            setInitializing(false)
         }
         init()
     }, [])
@@ -23,10 +20,6 @@ export default function PlaylistsView() {
     const handlePlaylistClick = (playlistId: PlaylistId) => {
         db.setPlayerState({ lastPlaylistId: playlistId })
         window.location.href = "/player"
-    }
-
-    if (initializing) {
-        return <div className="min-h-screen bg-[#0B0B0B]" />
     }
 
     return (

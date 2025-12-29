@@ -148,8 +148,7 @@ export function PlayerProvider({
                 audioRef.current.src = ""
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally depend on specific properties only
-    }, [currentTrack?.id, currentTrack?.audio, initialTimeMs])
+    }, [currentTrack, initialTimeMs])
 
     useEffect(() => {
         const audio = audioRef.current
@@ -185,7 +184,6 @@ export function PlayerProvider({
         }
     }, [tracks, currentTrackIndex])
 
-    // Periodic save of player state
     useEffect(() => {
         if (!currentTrack) return
 
@@ -195,7 +193,6 @@ export function PlayerProvider({
         return () => clearInterval(interval)
     }, [currentTrackIndex, savePlayerState, currentTrack])
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => {
             savePlayerState()
