@@ -33,8 +33,12 @@ export function parsePaginationParams(
     const limitParam = url.searchParams.get("limit")
     const offsetParam = url.searchParams.get("offset")
 
-    const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10) || defaults.limit), 50) : defaults.limit
-    const offset = offsetParam ? Math.max(0, parseInt(offsetParam, 10) || defaults.offset) : defaults.offset
+    const limit = limitParam
+        ? Math.min(Math.max(1, parseInt(limitParam, 10) || defaults.limit), 50)
+        : defaults.limit
+    const offset = offsetParam
+        ? Math.max(0, parseInt(offsetParam, 10) || defaults.offset)
+        : defaults.offset
 
     return { limit, offset }
 }

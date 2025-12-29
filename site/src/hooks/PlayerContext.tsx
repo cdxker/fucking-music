@@ -1,4 +1,12 @@
-import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode } from "react"
+import {
+    createContext,
+    useState,
+    useCallback,
+    useRef,
+    useEffect,
+    useContext,
+    type ReactNode,
+} from "react"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 import { musicCache } from "@/lib/musicCache"
 import { db } from "@/lib/store"
@@ -29,7 +37,7 @@ const PlayerContext = createContext<PlayerContextValue | null>(null)
 
 interface PlayerProviderProps {
     children: ReactNode
-    initialPlaylist?: FuckingPlaylist,
+    initialPlaylist?: FuckingPlaylist
     initialTracks: FuckingTrack[]
     initialTrackIndex: number
     initialTimeMs: number
@@ -114,10 +122,7 @@ export function PlayerProvider({
 
         loadAudio().then(() => {
             if (!audioRef.current) return
-            if (
-                !initialSeekDone.current &&
-                initialTimeMs > 0
-            ) {
+            if (!initialSeekDone.current && initialTimeMs > 0) {
                 const handleLoadedMetadata = () => {
                     if (!audioRef.current) return
                     audioRef.current.currentTime = initialTimeMs / 1000
@@ -143,7 +148,7 @@ export function PlayerProvider({
                 audioRef.current.src = ""
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally depend on specific properties only
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally depend on specific properties only
     }, [currentTrack?.id, currentTrack?.audio, initialTimeMs])
 
     useEffect(() => {
