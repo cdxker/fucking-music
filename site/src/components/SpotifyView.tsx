@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import PlayerLayout from "./PlayerLayout"
-import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer"
 import type {
     SpotifyPlaylist,
     SpotifyPlaylistsResponse,
@@ -8,6 +7,37 @@ import type {
     SpotifyTrack,
     SpotifyUserProfile,
 } from "@/shared/types"
+
+interface SpotifyPlayerAPI {
+    Player: new (options: {
+        name: string
+        getOAuthToken: (cb: (token: string) => void) => void
+        volume: number
+    }) => SpotifyPlayerInstance
+}
+
+interface SpotifyPlayerInstance {
+    connect: () => Promise<boolean>
+    disconnect: () => void
+    addListener: (event: string, callback: (state: unknown) => void) => void
+    togglePlay: () => Promise<void>
+    nextTrack: () => Promise<void>
+    previousTrack: () => Promise<void>
+}
+
+declare global {
+    interface Window {
+        onSpotifyWebPlaybackSDKReady: () => void
+        Spotify: SpotifyPlayerAPI
+    }
+}
+
+interface PlayerTrack {
+    uri: string
+    name: string
+    artists: { name: string }[]
+    album: { name: string; images: { url: string }[] }
+}
 
 function formatDuration(ms: number): string {
     if (!Number.isFinite(ms) || ms < 0) return "0:00"
@@ -25,15 +55,11 @@ const SpotifyView = () => {
     const [tracksLoading, setTracksLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const {
-        isReady,
-        isPaused,
-        currentTrack,
-        playPlaylist,
-        togglePlay,
-        skipNext,
-        skipPrevious,
-    } = useSpotifyPlayer()
+    const [isReady, setIsReady] = useState(false)
+    const [isPaused, setIsPaused] = useState(true)
+    const [currentTrack, setCurrentTrack] = useState<PlayerTrack | null>(null)
+    const playerRef = useRef<SpotifyPlayerInstance | null>(null)
+    const deviceIdRef = useRef<string | null>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -65,6 +91,68 @@ const SpotifyView = () => {
         fetchData()
     }, [])
 
+    useEffect(() => {
+        let mounted = true
+
+        const initPlayer = async () => {
+            const res = await fetch("/api/spotify/token")
+            const data = await res.json()
+            if (!data.token || !mounted) return
+
+            const token = data.token
+
+            if (!document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')) {
+                const script = document.createElement("script")
+                script.src = "https://sdk.scdn.co/spotify-player.js"
+                script.async = true
+                document.body.appendChild(script)
+            }
+
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                if (playerRef.current || !mounted) return
+
+                const player = new window.Spotify.Player({
+                    name: "Rotations Web Player",
+                    getOAuthToken: (cb) => cb(token),
+                    volume: 0.5,
+                })
+
+                player.addListener("ready", (state) => {
+                    const { device_id } = state as { device_id: string }
+                    deviceIdRef.current = device_id
+                    setIsReady(true)
+                })
+
+                player.addListener("not_ready", () => setIsReady(false))
+
+                player.addListener("player_state_changed", (state) => {
+                    if (!state) return
+                    const typedState = state as { paused: boolean; track_window: { current_track: PlayerTrack } }
+                    setIsPaused(typedState.paused)
+                    setCurrentTrack(typedState.track_window.current_track)
+                })
+
+                player.addListener("initialization_error", () => setIsReady(false))
+                player.addListener("authentication_error", () => setIsReady(false))
+                player.addListener("account_error", () => setIsReady(false))
+
+                player.connect()
+                playerRef.current = player
+            }
+
+            if (window.Spotify) {
+                window.onSpotifyWebPlaybackSDKReady()
+            }
+        }
+
+        initPlayer()
+
+        return () => {
+            mounted = false
+            playerRef.current?.disconnect()
+        }
+    }, [])
+
     const handlePlaylistClick = async (playlist: SpotifyPlaylist) => {
         setSelectedPlaylist(playlist)
         setTracksLoading(true)
@@ -88,9 +176,17 @@ const SpotifyView = () => {
     }
 
     const handleTrackClick = async (track: SpotifyTrack) => {
-        if (!selectedPlaylist || !isReady) return
+        if (!selectedPlaylist || !deviceIdRef.current) return
         try {
-            await playPlaylist(selectedPlaylist.uri, track.uri)
+            await fetch("/api/spotify/play", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    device_id: deviceIdRef.current,
+                    context_uri: selectedPlaylist.uri,
+                    offset: { uri: track.uri },
+                }),
+            })
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to play track")
         }
@@ -264,7 +360,7 @@ const SpotifyView = () => {
                         </div>
                         <div className="flex items-center gap-4">
                             <button
-                                onClick={skipPrevious}
+                                onClick={() => playerRef.current?.previousTrack()}
                                 className="text-white/70 hover:text-white transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -272,7 +368,7 @@ const SpotifyView = () => {
                                 </svg>
                             </button>
                             <button
-                                onClick={togglePlay}
+                                onClick={() => playerRef.current?.togglePlay()}
                                 className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform"
                             >
                                 {isPaused ? (
@@ -286,7 +382,7 @@ const SpotifyView = () => {
                                 )}
                             </button>
                             <button
-                                onClick={skipNext}
+                                onClick={() => playerRef.current?.nextTrack()}
                                 className="text-white/70 hover:text-white transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
