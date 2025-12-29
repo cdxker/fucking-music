@@ -9,7 +9,7 @@ function getInitialError(): string | null {
     const params = new URLSearchParams(window.location.search)
     const spotifyError = params.get("spotify_error")
     if (spotifyError) {
-        window.history.replaceState({}, "", "/onboarding")
+        window.history.replaceState({}, "", "/bad-onboarding")
         return `Spotify connection failed: ${spotifyError}`
     }
     return null

@@ -68,7 +68,7 @@ const SpotifyView = () => {
                 const userData = await userRes.json()
 
                 if (!userData.user) {
-                    window.location.href = "/onboarding"
+                    window.location.href = "/bad-onboarding"
                     return
                 }
 

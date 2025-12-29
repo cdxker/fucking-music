@@ -8,11 +8,11 @@ export const GET: APIRoute = async ({ url }) => {
     const baseUrl = url.origin
 
     if (error) {
-        return Response.redirect(`${baseUrl}/onboarding?spotify_error=${encodeURIComponent(error)}`, 302)
+        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=${encodeURIComponent(error)}`, 302)
     }
 
     if (!code) {
-        return Response.redirect(`${baseUrl}/onboarding?spotify_error=missing_code`, 302)
+        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=missing_code`, 302)
     }
 
     const clientId = import.meta.env.SPOTIFY_CLIENT_ID
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ url }) => {
     const redirectUri = import.meta.env.SPOTIFY_REDIRECT_URI
 
     if (!clientId || !clientSecret || !redirectUri) {
-        return Response.redirect(`${baseUrl}/onboarding?spotify_error=server_config`, 302)
+        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=server_config`, 302)
     }
 
     try {
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ url }) => {
         })
 
         if (!tokenResponse.ok) {
-            return Response.redirect(`${baseUrl}/onboarding?spotify_error=token_exchange`, 302)
+            return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=token_exchange`, 302)
         }
 
         const tokenData: SpotifyTokenResponse = await tokenResponse.json()
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ url }) => {
         })
 
         if (!userResponse.ok) {
-            return Response.redirect(`${baseUrl}/onboarding?spotify_error=user_fetch`, 302)
+            return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=user_fetch`, 302)
         }
 
         const userData: SpotifyUserProfile = await userResponse.json()
@@ -65,6 +65,6 @@ export const GET: APIRoute = async ({ url }) => {
             ],
         })
     } catch {
-        return Response.redirect(`${baseUrl}/onboarding?spotify_error=unknown`, 302)
+        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=unknown`, 302)
     }
 }
