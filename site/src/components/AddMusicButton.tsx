@@ -4,7 +4,7 @@ import { usePlayer } from "@/hooks/PlayerContext";
 import { db } from "@/lib/store";
 
 
-export const AddMusicButton = () => {
+export const AddMusicButton = ({ text }: {text?: string}) => {
 
     const [showInput, setShowInput] = useState(false)
     const [inputValue, setInputValue] = useState("")
@@ -90,7 +90,7 @@ export const AddMusicButton = () => {
         className="text-white/70"
         onClick={() => setShowInput(true)}
     >
-        Add Music
+            {text || "Add Music"}
     </Button>
 
     );

@@ -1,12 +1,9 @@
-import PlayerView from "./PlayerView"
 import { useState, useEffect, type ReactNode } from "react"
 import type { FuckingPlaylist, FuckingTrack } from "../shared/types"
 import { db } from "@/lib/store"
 import { musicCache } from "@/lib/musicCache"
 import { shuffleAssociations } from "@/lib/associations"
 import { PlayerProvider } from "@/hooks/PlayerContext"
-import { AddMusicButton } from "./AddMusicButton"
-import { TimeSlider } from "./TimeSlider"
 
 export default function PlayerLayout({ children }: { children: ReactNode }) {
     const [initData, setInitData] = useState<{

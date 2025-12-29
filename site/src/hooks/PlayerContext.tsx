@@ -143,6 +143,7 @@ export function PlayerProvider({
                 audioRef.current.src = ""
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally depend on specific properties only
     }, [currentTrack?.id, currentTrack?.audio, initialTimeMs])
 
     useEffect(() => {
