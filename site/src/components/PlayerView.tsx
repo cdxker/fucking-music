@@ -41,7 +41,8 @@ function MusicView() {
                     track !== null &&
                     playlistId !== null &&
                     playlistId !== undefined
-            ).map(([playlistId, trackId]) => ({
+            )
+            .map(([playlistId, trackId]) => ({
                 playlist: db.getPlaylist(playlistId as PlaylistId) as FuckingPlaylist,
                 track: db.getTrack(trackId as TrackId) as FuckingTrack,
             }))
@@ -54,15 +55,14 @@ function MusicView() {
     return (
         <div className="flex flex-col gap-4 justify-center items-center">
             <div className="max-w-2xl">
-
                 <SideTrack
                     track={nextTracks[0]?.track}
                     playlist={nextTracks[0]?.playlist}
                     position="left"
                 />
-                    <div className="text-white/90 text-2xl">
-                        <p className="capitalize">{playlist.name}</p>
-                    </div>
+                <div className="text-white/90 text-2xl">
+                    <p className="capitalize">{playlist.name}</p>
+                </div>
                 <div className="mt-2 relative z-20">
                     <div>
                         <img
@@ -74,12 +74,8 @@ function MusicView() {
                             onClick={togglePlayPause}
                             className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
                         >
-                        {!isPlaying && (
-                            <Play color="#fff" size="50" />
-                        )}
-                        {isPlaying && (
-                            <Pause color="#fff" size="50" />
-                        )}
+                            {!isPlaying && <Play color="#fff" size="50" />}
+                            {isPlaying && <Pause color="#fff" size="50" />}
                         </button>
                     </div>
                 </div>
@@ -107,10 +103,9 @@ function MusicView() {
                         >
                             <div className="flex items-center gap-3">
                                 <span
-                                    className={cn("z-20 text-base ml-6",
-                                        {
-                                            "text-white": index === currentTrackIndex
-                                        })}
+                                    className={cn("z-20 text-base ml-6", {
+                                        "text-white": index === currentTrackIndex,
+                                    })}
                                 >
                                     {track.name}
                                 </span>
@@ -127,15 +122,15 @@ function MusicView() {
 function PlayerView() {
     return (
         <PlayerLayout>
-    <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-        <MusicView />
-        <div className="flex items-center justify-center w-full text-sm">
-            <AddMusicButton />
-        </div>
-        <TimeSlider expanded={false} />
-    </div>
-    </PlayerLayout>
-    );
+            <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
+                <MusicView />
+                <div className="flex items-center justify-center w-full text-sm">
+                    <AddMusicButton />
+                </div>
+                <TimeSlider expanded={false} />
+            </div>
+        </PlayerLayout>
+    )
 }
 
 export default PlayerView

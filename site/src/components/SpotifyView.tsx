@@ -127,7 +127,10 @@ const SpotifyView = () => {
 
                 player.addListener("player_state_changed", (state) => {
                     if (!state) return
-                    const typedState = state as { paused: boolean; track_window: { current_track: PlayerTrack } }
+                    const typedState = state as {
+                        paused: boolean
+                        track_window: { current_track: PlayerTrack }
+                    }
                     setIsPaused(typedState.paused)
                     setCurrentTrack(typedState.track_window.current_track)
                 })
@@ -239,7 +242,9 @@ const SpotifyView = () => {
                                 )}
                                 <div>
                                     <h1 className="text-2xl font-bold">{selectedPlaylist.name}</h1>
-                                    <p className="text-white/50">{selectedPlaylist.tracks.total} tracks</p>
+                                    <p className="text-white/50">
+                                        {selectedPlaylist.tracks.total} tracks
+                                    </p>
                                 </div>
                             </>
                         ) : (
@@ -285,7 +290,10 @@ const SpotifyView = () => {
                                             {index + 1}
                                         </span>
                                         <img
-                                            src={track.album.images?.[2]?.url || track.album.images?.[0]?.url}
+                                            src={
+                                                track.album.images?.[2]?.url ||
+                                                track.album.images?.[0]?.url
+                                            }
                                             alt={track.album.name}
                                             className="w-10 h-10 rounded"
                                         />
@@ -348,7 +356,10 @@ const SpotifyView = () => {
                 <div className="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-white/10 p-4">
                     <div className="max-w-6xl mx-auto flex items-center gap-4">
                         <img
-                            src={currentTrack.album.images?.[2]?.url || currentTrack.album.images?.[0]?.url}
+                            src={
+                                currentTrack.album.images?.[2]?.url ||
+                                currentTrack.album.images?.[0]?.url
+                            }
                             alt={currentTrack.album.name}
                             className="w-14 h-14 rounded"
                         />
@@ -372,11 +383,19 @@ const SpotifyView = () => {
                                 className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform"
                             >
                                 {isPaused ? (
-                                    <svg className="w-5 h-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <svg
+                                        className="w-5 h-5 text-black ml-0.5"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
                                         <path d="M8 5v14l11-7z" />
                                     </svg>
                                 ) : (
-                                    <svg className="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24">
+                                    <svg
+                                        className="w-5 h-5 text-black"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
                                         <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                                     </svg>
                                 )}

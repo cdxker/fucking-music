@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { Button } from "./ui/button";
-import { usePlayer } from "@/hooks/PlayerContext";
-import { db } from "@/lib/store";
+import { useState } from "react"
+import { Button } from "./ui/button"
+import { usePlayer } from "@/hooks/PlayerContext"
+import { db } from "@/lib/store"
 
-
-export const AddMusicButton = ({ text }: {text?: string}) => {
-
+export const AddMusicButton = ({ text }: { text?: string }) => {
     const [showInput, setShowInput] = useState(false)
     const [inputValue, setInputValue] = useState("")
     const { setPlaylistAndTracks } = usePlayer()
@@ -19,7 +17,6 @@ export const AddMusicButton = ({ text }: {text?: string}) => {
         }
         return "/api/bandcamp/scrape"
     }
-
 
     const handleSubmit = async () => {
         if (!inputValue.trim()) return
@@ -37,7 +34,11 @@ export const AddMusicButton = ({ text }: {text?: string}) => {
             db.insertPlaylist(data.playlist)
             db.insertTracks(data.tracks, data.playlist.id)
 
-            setPlaylistAndTracks({ playlist: data.playlist, tracks: data.tracks, startingTrackIndex: 0 })
+            setPlaylistAndTracks({
+                playlist: data.playlist,
+                tracks: data.tracks,
+                startingTrackIndex: 0,
+            })
             setShowInput(false)
             setInputValue("")
         } catch (e) {
@@ -80,18 +81,17 @@ export const AddMusicButton = ({ text }: {text?: string}) => {
                     </Button>
                 </div>
             </div>
-        );
+        )
     }
 
     return (
-    <Button
-        variant="outline"
-        size="default"
-        className="text-white/70"
-        onClick={() => setShowInput(true)}
-    >
+        <Button
+            variant="outline"
+            size="default"
+            className="text-white/70"
+            onClick={() => setShowInput(true)}
+        >
             {text || "Add Music"}
-    </Button>
-
-    );
+        </Button>
+    )
 }

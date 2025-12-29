@@ -8,7 +8,10 @@ export const GET: APIRoute = async ({ url }) => {
     const baseUrl = url.origin
 
     if (error) {
-        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=${encodeURIComponent(error)}`, 302)
+        return Response.redirect(
+            `${baseUrl}/bad-onboarding?spotify_error=${encodeURIComponent(error)}`,
+            302
+        )
     }
 
     if (!code) {
@@ -60,8 +63,14 @@ export const GET: APIRoute = async ({ url }) => {
             headers: [
                 ["Location", `${baseUrl}/spotify`],
                 ["Set-Cookie", `spotify_access_token=${tokenData.access_token}; ${COOKIE_OPTIONS}`],
-                ["Set-Cookie", `spotify_refresh_token=${tokenData.refresh_token}; ${COOKIE_OPTIONS}`],
-                ["Set-Cookie", `spotify_user=${encodeURIComponent(JSON.stringify(userData))}; ${COOKIE_OPTIONS}`],
+                [
+                    "Set-Cookie",
+                    `spotify_refresh_token=${tokenData.refresh_token}; ${COOKIE_OPTIONS}`,
+                ],
+                [
+                    "Set-Cookie",
+                    `spotify_user=${encodeURIComponent(JSON.stringify(userData))}; ${COOKIE_OPTIONS}`,
+                ],
             ],
         })
     } catch {
