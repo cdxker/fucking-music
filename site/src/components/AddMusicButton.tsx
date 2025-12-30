@@ -49,7 +49,7 @@ export const AddMusicButton = ({ text }: { text?: string }) => {
             <div className="flex flex-col gap-4 w-full max-w-md">
                 <input
                     type="url"
-                    placeholder="Paste Bandcamp, Spotify, or YouTube URL..."
+                    placeholder="Paste Bandcamp URL..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
