@@ -1,19 +1,14 @@
 import type { APIRoute } from "astro"
+import { type } from "arktype"
 import { getAccessToken, errorResponse } from "@/lib/server"
 
-interface PlayRequestBody {
-    device_id?: string
-    context_uri: string
-    offset?: { uri: string } | { position: number }
-}
+const playRequestSchema = type({
+    "device_id?": "string",
+    context_uri: "string",
+    "offset?": type({ uri: "string" }).or({ position: "number" }),
+})
 
-function isValidPlayRequest(body: unknown): body is PlayRequestBody {
-    if (typeof body !== "object" || body === null) return false
-    const b = body as Record<string, unknown>
-    if (typeof b.context_uri !== "string") return false
-    if (b.device_id !== undefined && typeof b.device_id !== "string") return false
-    return true
-}
+type PlayRequestBody = typeof playRequestSchema.infer
 
 export const PUT: APIRoute = async ({ request }) => {
     const accessToken = getAccessToken(request)
@@ -29,11 +24,12 @@ export const PUT: APIRoute = async ({ request }) => {
         return errorResponse("Invalid JSON body", 400)
     }
 
-    if (!isValidPlayRequest(body)) {
-        return errorResponse("Invalid request body: context_uri is required", 400)
+    const result = playRequestSchema(body)
+    if (result instanceof type.errors) {
+        return errorResponse(`Invalid request body: ${result.summary}`, 400)
     }
 
-    const { device_id, context_uri, offset } = body
+    const { device_id, context_uri, offset } = result
 
     const playResponse = await fetch(
         `https://api.spotify.com/v1/me/player/play${device_id ? `?device_id=${device_id}` : ""}`,

@@ -1,17 +1,15 @@
 import type { APIRoute } from "astro"
+import { type } from "arktype"
 import type { PlaylistId, FuckingPlaylist, FuckingTrack, TrackId } from "../../../shared/types"
+import { jsonResponse, errorResponse } from "@/lib/server"
 
-export const GET: APIRoute = async ({ url }) => {
-    const spotifyUrl = url.searchParams.get("url")
-
-    if (!spotifyUrl) {
-        return new Response(JSON.stringify({ error: "Missing 'url' query parameter" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-        })
-    }
-
-    // Parse Spotify URL
+const scrapeParamsSchema = type({
+    url: type("string | null").pipe.try((v) => {
+        if (!v) throw new Error("Missing 'url' query parameter")
+        return v
+    }),
+}).pipe.try((params) => {
+    const spotifyUrl = params.url
     const trackMatch = spotifyUrl.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/)
     const albumMatch = spotifyUrl.match(/spotify\.com\/album\/([a-zA-Z0-9]+)/)
     const playlistMatch = spotifyUrl.match(/spotify\.com\/playlist\/([a-zA-Z0-9]+)/)
@@ -20,13 +18,21 @@ export const GET: APIRoute = async ({ url }) => {
     const urlId = trackMatch?.[1] || albumMatch?.[1] || playlistMatch?.[1]
 
     if (!urlType || !urlId) {
-        return new Response(
-            JSON.stringify({
-                error: "Invalid Spotify URL. Must be a track, album, or playlist URL.",
-            }),
-            { status: 400, headers: { "Content-Type": "application/json" } }
-        )
+        throw new Error("Invalid Spotify URL. Must be a track, album, or playlist URL.")
     }
+
+    return { urlType: urlType as "track" | "album" | "playlist", urlId }
+})
+
+export const GET: APIRoute = async ({ url }) => {
+    const params = { url: url.searchParams.get("url") }
+
+    const result = scrapeParamsSchema(params)
+    if (result instanceof type.errors) {
+        return errorResponse(result.summary, 400)
+    }
+
+    const { urlType, urlId } = result
 
     try {
         const embedUrl = `https://open.spotify.com/embed/${urlType}/${urlId}`
