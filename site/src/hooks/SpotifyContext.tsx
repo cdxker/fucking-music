@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, type ReactNode } from "react"
+import { createContext, useState, useEffect, useContext, useRef, type ReactNode } from "react"
 import type {
     FuckingPlaylist,
     FuckingTrack,
@@ -10,10 +10,12 @@ import type {
     SpotifyUserProfile,
     TrackId,
 } from "@/shared/types"
+import type { SpotifyPlayerInstance } from "@/shared/spotify-sdk"
 import { usePlayer } from "./PlayerContext"
 
 export interface SpotifyContextValue {
     spotifyUser: SpotifyUserProfile | null
+    spotifyDeviceId: string | null
     spotifyLogin: () => void
 }
 
@@ -40,6 +42,7 @@ const spotifyPlaylistToFuckingPlaylist = (playlist: SpotifyPlaylist): FuckingPla
             audio: { type: "stream", url: "" },
         },
         totalDurationMs: 0,
+        source: "spotify",
     }
 }
 
@@ -55,8 +58,10 @@ const spotifyTrackToFuckingTrack = (track: SpotifyTrack): FuckingTrack => {
 
 export function SpotifyProvider({ children }: SpotifyProviderProps) {
     const [spotifyUser, setSpotifyUser] = useState<SpotifyUserProfile | null>(null)
+    const playerRef = useRef<SpotifyPlayerInstance | null>(null)
 
-    const { addPlaylists, addTracks } = usePlayer()
+    const { addPlaylists, addTracks, spotifyDeviceId, setSpotifyDeviceId, setSpotifyPlayer } =
+        usePlayer()
 
     useEffect(() => {
         fetch("/api/spotify/me", {
@@ -75,7 +80,7 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
             const playlistsRes = await fetch("/api/spotify/playlists?limit=50")
             const playlistsData: SpotifyPlaylistsResponse = await playlistsRes.json()
             const spotifyPlaylists = playlistsData.items
-            if (!spotifyPlaylists || spotifyPlaylists.length == 0) return;
+            if (!spotifyPlaylists || spotifyPlaylists.length == 0) return
             const playlistsWithTracks = await Promise.all(
                 spotifyPlaylists.map(async (playlist) => {
                     const tracksRes = await fetch(
@@ -112,12 +117,73 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
         fetchPlaylistsAndTracks()
     }, [spotifyUser, addPlaylists, addTracks])
 
+    // Initialize Spotify Web Playback SDK to get a device_id
+    useEffect(() => {
+        if (!spotifyUser) return
+
+        let mounted = true
+
+        const initPlayer = async () => {
+            const res = await fetch("/api/spotify/token")
+            const data = await res.json()
+            if (!data.token || !mounted) return
+
+            const token = data.token
+
+            // Load SDK script if not already loaded
+            if (!document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')) {
+                const script = document.createElement("script")
+                script.src = "https://sdk.scdn.co/spotify-player.js"
+                script.async = true
+                document.body.appendChild(script)
+            }
+
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                if (playerRef.current || !mounted || !window.Spotify) return
+
+                const player = new window.Spotify.Player({
+                    name: "Rotations Player",
+                    getOAuthToken: (cb) => cb(token),
+                    volume: 0.5,
+                })
+
+                player.addListener("ready", (state) => {
+                    const { device_id } = state as { device_id: string }
+                    setSpotifyDeviceId(device_id)
+                })
+
+                player.addListener("not_ready", () => {
+                    setSpotifyDeviceId(null)
+                })
+
+                player.connect()
+                playerRef.current = player
+                setSpotifyPlayer(player)
+            }
+
+            // If SDK already loaded, initialize immediately
+            if (window.Spotify) {
+                window.onSpotifyWebPlaybackSDKReady()
+            }
+        }
+
+        initPlayer()
+
+        return () => {
+            mounted = false
+            playerRef.current?.disconnect()
+            playerRef.current = null
+            setSpotifyPlayer(null)
+        }
+    }, [spotifyUser, setSpotifyPlayer, setSpotifyDeviceId])
+
     const spotifyLogin = () => {
         window.location.href = "/api/spotify/authorize"
     }
 
     const value: SpotifyContextValue = {
         spotifyUser,
+        spotifyDeviceId,
         spotifyLogin,
     }
 

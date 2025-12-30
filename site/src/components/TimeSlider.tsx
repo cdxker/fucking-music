@@ -58,7 +58,10 @@ export const TimeSlider = ({ expanded }: TimeSliderProps) => {
                 <div className="flex items-center justify-center space-x-3">
                     <SkipBack color="#fff" />
                     <Rewind color="#fff" />
-                    <div className="rounded-full bg-white px-2 py-2" onClick={togglePlayPause}>
+                    <div
+                        className="rounded-full bg-white text-black px-2 py-2"
+                        onClick={togglePlayPause}
+                    >
                         {!isPlaying && <Play />}
                         {isPlaying && <Pause />}
                     </div>

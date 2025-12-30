@@ -3,15 +3,15 @@ import { type } from "arktype"
 import { getAccessToken, getRefreshToken, refreshAccessToken, errorResponse } from "@/lib/server"
 
 const playRequestSchema = type({
-    "device_id?": "string",
+    device_id: "string",
     context_uri: "string",
-    "offset?": type({ uri: "string" }).or({ position: "number" }),
+    offset: type({ uri: "string" }).or({ position: "number" }),
 })
 
 interface PlayParams {
-    device_id?: string
+    device_id: string
     context_uri: string
-    offset?: { uri: string } | { position: number }
+    offset: { uri: string } | { position: number }
 }
 
 async function startPlayback(accessToken: string, params: PlayParams) {

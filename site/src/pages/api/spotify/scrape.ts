@@ -134,6 +134,7 @@ export const GET: APIRoute = async ({ url }) => {
             artists: artistNames,
             first_track: tracks[0],
             totalDurationMs: tracks.reduce((acc, t) => acc + t.time_ms, 0),
+            source: "spotify",
         }
 
         return new Response(JSON.stringify({ playlist, tracks }, null, 2), {

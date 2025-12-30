@@ -7,30 +7,7 @@ import type {
     SpotifyTrack,
     SpotifyUserProfile,
 } from "@/shared/types"
-
-interface SpotifyPlayerAPI {
-    Player: new (options: {
-        name: string
-        getOAuthToken: (cb: (token: string) => void) => void
-        volume: number
-    }) => SpotifyPlayerInstance
-}
-
-interface SpotifyPlayerInstance {
-    connect: () => Promise<boolean>
-    disconnect: () => void
-    addListener: (event: string, callback: (state: unknown) => void) => void
-    togglePlay: () => Promise<void>
-    nextTrack: () => Promise<void>
-    previousTrack: () => Promise<void>
-}
-
-declare global {
-    interface Window {
-        onSpotifyWebPlaybackSDKReady: () => void
-        Spotify: SpotifyPlayerAPI
-    }
-}
+import type { SpotifyPlayerInstance } from "@/shared/spotify-sdk"
 
 interface PlayerTrack {
     uri: string
@@ -109,7 +86,7 @@ const SpotifyView = () => {
             }
 
             window.onSpotifyWebPlaybackSDKReady = () => {
-                if (playerRef.current || !mounted) return
+                if (playerRef.current || !mounted || !window.Spotify) return
 
                 const player = new window.Spotify.Player({
                     name: "Rotations Web Player",

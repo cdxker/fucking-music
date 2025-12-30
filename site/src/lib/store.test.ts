@@ -6,6 +6,7 @@ import type {
     FuckingTrack,
     FuckingPlaylistWithTracks,
     PlaylistId,
+    PlaylistSource,
     TrackId,
 } from "@/shared/types"
 
@@ -90,6 +91,7 @@ class TestDatabase {
             artists: JSON.parse((row.artists as string) || "[]"),
             first_track: firstTrack,
             totalDurationMs,
+            source: (row.source as PlaylistSource) || null,
         }
     }
 
@@ -190,6 +192,7 @@ const mockPlaylist: FuckingPlaylistWithTracks = {
     first_track: mockTrack1,
     totalDurationMs: 420000,
     tracks: [mockTrack1, mockTrack2],
+    source: "bandcamp",
 }
 
 describe("TinyBase Store", () => {
@@ -286,6 +289,7 @@ describe("TinyBase Store", () => {
                         audio: { type: "stream", url: "https://example.com/track3.mp3" },
                     },
                 ],
+                source: "bandcamp",
             }
             db.insertPlaylistWithTracks(secondPlaylist)
 

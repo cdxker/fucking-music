@@ -1,5 +1,7 @@
 export type PlaylistId = `play-${string}`
 
+export type PlaylistSource = "spotify" | "youtube" | "bandcamp"
+
 export interface FuckingPlaylist {
     id: PlaylistId
     track_cover_uri: string
@@ -7,6 +9,7 @@ export interface FuckingPlaylist {
     artists: string[]
     first_track: FuckingTrack
     totalDurationMs: number
+    source: PlaylistSource | null
 }
 
 export type TrackId = `track-${string}`

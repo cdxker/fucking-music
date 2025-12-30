@@ -123,6 +123,7 @@ function transformBandcampToFuckingPlaylist(pageData: BandcampPageData): {
         artists: [artist],
         first_track: tracks[0],
         totalDurationMs: tracks.reduce((acc, t) => acc + t.time_ms, 0),
+        source: "bandcamp",
     }
 
     return { playlist, tracks }

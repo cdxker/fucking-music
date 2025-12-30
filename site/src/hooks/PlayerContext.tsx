@@ -8,6 +8,7 @@ import {
     type ReactNode,
 } from "react"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
+import type { SpotifyPlayerInstance } from "@/shared/spotify-sdk"
 import { musicCache } from "@/lib/musicCache"
 import { db } from "@/lib/store"
 
@@ -32,6 +33,10 @@ export interface PlayerContextValue {
     handleTrackSelect: (index: number) => void
     addPlaylists: (playlists: FuckingPlaylist[]) => void
     addTracks: (tracks: FuckingTrack[], playlistId: PlaylistId) => void
+
+    spotifyDeviceId: string | null
+    setSpotifyDeviceId: (id: string | null) => void
+    setSpotifyPlayer: (player: SpotifyPlayerInstance | null) => void
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null)
@@ -56,6 +61,12 @@ export function PlayerProvider({
     const [currentTrackIndex, setCurrentTrackIndex] = useState(initialTrackIndex)
     const [currentTimeMs, setCurrentTimeMs] = useState(initialTimeMs)
     const [isPlaying, setIsPlaying] = useState(true)
+    const [spotifyDeviceId, setSpotifyDeviceId] = useState<string | null>(null)
+    const spotifyPlayerRef = useRef<SpotifyPlayerInstance | null>(null)
+
+    const setSpotifyPlayer = useCallback((player: SpotifyPlayerInstance | null) => {
+        spotifyPlayerRef.current = player
+    }, [])
 
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const initialSeekDone = useRef(false)
@@ -138,6 +149,28 @@ export function PlayerProvider({
                 currentBlobUrlRef.current = null
             }
 
+            // For Spotify playlists, use Spotify's playback API
+            if (playlist?.source === "spotify") {
+                const playlistSpotifyId = playlist.id.replace("play-spotify-", "")
+                const trackSpotifyId = currentTrack.id.replace("track-spotify-", "")
+
+                if (!spotifyDeviceId) {
+                    console.error("No Spotify device available")
+                    return
+                }
+
+                await fetch("/api/spotify/play", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        device_id: spotifyDeviceId,
+                        context_uri: `spotify:playlist:${playlistSpotifyId}`,
+                        offset: { uri: `spotify:track:${trackSpotifyId}` },
+                    }),
+                })
+                return
+            }
+
             let audioUrl: string
 
             if (currentTrack.audio.type === "youtube") {
@@ -161,6 +194,9 @@ export function PlayerProvider({
         }
 
         loadAudio().then(() => {
+            // Spotify playback is handled by Spotify's client, not our audio element
+            if (playlist?.source === "spotify") return
+
             if (!audioRef.current) return
             if (!initialSeekDone.current && initialTimeMs > 0) {
                 const handleLoadedMetadata = () => {
@@ -188,7 +224,7 @@ export function PlayerProvider({
                 audioRef.current.src = ""
             }
         }
-    }, [currentTrack, initialTimeMs])
+    }, [currentTrack, initialTimeMs, playlist, spotifyDeviceId])
 
     useEffect(() => {
         const audio = audioRef.current
@@ -243,6 +279,13 @@ export function PlayerProvider({
     }, [savePlayerState])
 
     const togglePlayPause = useCallback(() => {
+        // For Spotify, use the Spotify player's togglePlay
+        if (playlist?.source === "spotify") {
+            spotifyPlayerRef.current?.togglePlay()
+            setIsPlaying(!isPlaying)
+            return
+        }
+
         const audio = audioRef.current
         if (!audio) return
 
@@ -252,7 +295,7 @@ export function PlayerProvider({
             audio.play()
         }
         setIsPlaying(!isPlaying)
-    }, [isPlaying])
+    }, [isPlaying, playlist])
 
     const handleSeek = useCallback((value: number) => {
         const audio = audioRef.current
@@ -284,6 +327,9 @@ export function PlayerProvider({
         handleTrackSelect,
         addPlaylists,
         addTracks,
+        spotifyDeviceId,
+        setSpotifyDeviceId,
+        setSpotifyPlayer,
     }
 
     return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
