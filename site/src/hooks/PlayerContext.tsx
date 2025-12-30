@@ -7,14 +7,13 @@ import {
     useContext,
     type ReactNode,
 } from "react"
-import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
+import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { musicCache } from "@/lib/musicCache"
 import { db } from "@/lib/store"
 
 export type SetPlaylistAndTracksParams = {
-    playlist: FuckingPlaylist
-    tracks: FuckingTrack[]
-    startingTrackIndex: number
+    playlistId: PlaylistId
+    startingTrackId?: TrackId
 }
 
 export interface PlayerContextValue {
@@ -31,6 +30,8 @@ export interface PlayerContextValue {
     togglePlayPause: () => void
     handleSeek: (value: number) => void
     handleTrackSelect: (index: number) => void
+    addPlaylists: (playlists: FuckingPlaylist[]) => void
+    addTracks: (tracks: FuckingTrack[], playlistId: PlaylistId) => void
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null)
@@ -65,7 +66,19 @@ export function PlayerProvider({
     const totalDuration = currentTrack?.time_ms ?? 0
 
     const setPlaylistAndTracks = useCallback(
-        ({ playlist, tracks, startingTrackIndex = 0 }: SetPlaylistAndTracksParams) => {
+        ({ playlistId, startingTrackId }: SetPlaylistAndTracksParams) => {
+            const playlist = db.getPlaylist(playlistId)
+            if (!playlist) return
+
+            const tracks = db.getTracks(playlistId)
+            let startingTrackIndex = 0
+            if (startingTrackId) {
+                const foundIndex = tracks.findIndex((t) => t.id === startingTrackId)
+                if (foundIndex !== -1) {
+                    startingTrackIndex = foundIndex
+                }
+            }
+
             if (audioRef.current) {
                 audioRef.current.pause()
                 audioRef.current.removeAttribute("src")
@@ -82,6 +95,33 @@ export function PlayerProvider({
         },
         []
     )
+
+    const addPlaylists = useCallback((playlists: FuckingPlaylist[]) => {
+        for (const playlist of playlists) {
+            const existingPlaylist = db.getPlaylist(playlist.id)
+            if (existingPlaylist) continue
+
+            // Insert the first track if it doesn't exist
+            const existingTrack = db.getTrack(playlist.first_track.id)
+            if (!existingTrack) {
+                db.insertTracks([playlist.first_track], playlist.id)
+            }
+
+            db.insertPlaylist(playlist)
+        }
+    }, [])
+
+    const addTracks = useCallback((tracks: FuckingTrack[], playlistId: PlaylistId) => {
+        const newTracks: FuckingTrack[] = []
+        for (const track of tracks) {
+            const existingTrack = db.getTrack(track.id)
+            if (existingTrack) continue
+            newTracks.push(track)
+        }
+        if (newTracks.length > 0) {
+            db.insertTracks(newTracks, playlistId)
+        }
+    }, [])
 
     useEffect(() => {
         if (!currentTrack) return
@@ -242,6 +282,8 @@ export function PlayerProvider({
         togglePlayPause,
         handleSeek,
         handleTrackSelect,
+        addPlaylists,
+        addTracks,
     }
 
     return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>

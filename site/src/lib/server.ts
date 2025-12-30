@@ -17,6 +17,47 @@ export function getAccessToken(request: Request): string | null {
     return cookies.spotify_access_token || null
 }
 
+export function getRefreshToken(request: Request): string | null {
+    const cookies = parseCookies(request.headers.get("cookie"))
+    return cookies.spotify_refresh_token || null
+}
+
+export interface RefreshResult {
+    accessToken: string
+    setCookieHeader: string
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<RefreshResult | null> {
+    const clientId = import.meta.env.SPOTIFY_CLIENT_ID
+    const clientSecret = import.meta.env.SPOTIFY_CLIENT_SECRET
+
+    if (!clientId || !clientSecret) {
+        return null
+    }
+
+    const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: "Basic " + btoa(`${clientId}:${clientSecret}`),
+        },
+        body: new URLSearchParams({
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+        }),
+    })
+
+    if (!tokenResponse.ok) {
+        return null
+    }
+
+    const data = await tokenResponse.json()
+    return {
+        accessToken: data.access_token,
+        setCookieHeader: `spotify_access_token=${data.access_token}; ${COOKIE_OPTIONS}`,
+    }
+}
+
 export function jsonResponse<T>(data: T, status = 200): Response {
     return new Response(JSON.stringify(data), {
         status,

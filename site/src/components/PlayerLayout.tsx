@@ -55,15 +55,15 @@ export default function PlayerLayout({ children }: { children: ReactNode }) {
     }
 
     return (
-        <SpotifyProvider>
             <PlayerProvider
                 initialPlaylist={initData.playlist}
                 initialTracks={initData.tracks}
                 initialTrackIndex={initData.initialTrackIndex}
                 initialTimeMs={initData.initialTimeMs}
             >
+        <SpotifyProvider>
                 {children}
-            </PlayerProvider>
         </SpotifyProvider>
+            </PlayerProvider>
     )
 }
