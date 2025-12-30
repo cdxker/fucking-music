@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/shared/types"
 import { db } from "@/lib/store"
 import SideTrack from "./SideTrack"
@@ -8,6 +8,9 @@ import { Pause, Play } from "lucide-react"
 import { AddMusicButton } from "./AddMusicButton"
 import { TimeSlider } from "./TimeSlider"
 import PlayerLayout from "./PlayerLayout"
+import { SpoitfyIcon } from "./icons"
+import { Button } from "./ui/button"
+import { SpotifyStatus } from "./SpotifyStatus"
 
 function MusicView() {
     const {
@@ -120,10 +123,22 @@ function MusicView() {
 }
 
 function PlayerView() {
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
+
+    useEffect(() => {
+        const init = async () => {
+            await db.init()
+            setPlaylists(db.getPlaylists())
+        }
+        init()
+    }, [])
+
     return (
         <PlayerLayout>
-            <div className="min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B]">
-                <MusicView />
+            <div className="flex flex-col min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B] text-white">
+                <SpotifyStatus />
+                {playlists.length > 0 && <MusicView />}
+                {playlists.length === 0 && <div></div>}
                 <div className="flex items-center justify-center w-full text-sm">
                     <AddMusicButton />
                 </div>

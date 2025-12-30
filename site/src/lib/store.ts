@@ -6,6 +6,7 @@ import type {
     FuckingTrack,
     PlayerState,
     PlaylistId,
+    PlaylistSource,
     TrackId,
 } from "@/shared/types"
 
@@ -18,6 +19,7 @@ const store = createStore()
             name: { type: "string" },
             artists: { type: "string" }, // JSON stringified array
             first_track_id: { type: "string" },
+            source: { type: "string" },
         },
         tracks: {
             id: { type: "string" },
@@ -117,6 +119,7 @@ export class Database {
             artists: JSON.parse((row.artists as string) || "[]"),
             first_track: firstTrack,
             totalDurationMs,
+            source: (row.source as PlaylistSource) || null,
         }
     }
 
@@ -127,6 +130,7 @@ export class Database {
             name: playlist.name,
             artists: JSON.stringify(playlist.artists),
             first_track_id: playlist.first_track.id,
+            source: playlist.source ?? "",
         })
         this.setPlayerState({ lastPlaylistId: playlist.id })
     }

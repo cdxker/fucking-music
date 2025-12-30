@@ -1,6 +1,5 @@
 import { usePlayer } from "@/hooks/PlayerContext"
 import { cn } from "@/lib/utils"
-import { db } from "@/lib/store"
 import type { FuckingPlaylist, FuckingTrack } from "@/shared/types"
 
 export default function SideTrack({
@@ -18,16 +17,6 @@ export default function SideTrack({
         return null
     }
 
-    const handleClick = () => {
-        const tracks = db.getTracks(playlist.id)
-        const trackIndex = tracks.findIndex((t) => t.id === track.id)
-        setPlaylistAndTracks({
-            playlist,
-            tracks,
-            startingTrackIndex: trackIndex !== -1 ? trackIndex : 0,
-        })
-    }
-
     return (
         <div
             className={cn(
@@ -37,7 +26,12 @@ export default function SideTrack({
                     "right-20 text-right": position === "right",
                 }
             )}
-            onClick={handleClick}
+            onClick={() => {
+                setPlaylistAndTracks({
+                    playlistId: playlist.id,
+                    startingTrackId: track.id,
+                })
+            }}
         >
             <h1>{playlist.name}</h1>
             <img src={playlist.track_cover_uri} alt="" />

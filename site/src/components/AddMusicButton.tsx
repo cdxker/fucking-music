@@ -35,9 +35,7 @@ export const AddMusicButton = ({ text }: { text?: string }) => {
             db.insertTracks(data.tracks, data.playlist.id)
 
             setPlaylistAndTracks({
-                playlist: data.playlist,
-                tracks: data.tracks,
-                startingTrackIndex: 0,
+                playlistId: data.playlist.id,
             })
             setShowInput(false)
             setInputValue("")

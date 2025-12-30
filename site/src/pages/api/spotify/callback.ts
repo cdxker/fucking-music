@@ -1,22 +1,41 @@
 import type { APIRoute } from "astro"
+import { type } from "arktype"
 import type { SpotifyTokenResponse, SpotifyUserProfile } from "@/shared/types"
 import { COOKIE_OPTIONS } from "@/lib/server"
 
-export const GET: APIRoute = async ({ url }) => {
-    const code = url.searchParams.get("code")
-    const error = url.searchParams.get("error")
-    const baseUrl = url.origin
+const callbackParamsSchema = type({
+    code: "string | null",
+    error: "string | null",
+}).pipe((params) => {
+    if (params.error) {
+        return { success: false as const, error: params.error }
+    }
+    if (!params.code) {
+        return { success: false as const, error: "missing_code" }
+    }
+    return { success: true as const, code: params.code }
+})
 
-    if (error) {
+export const GET: APIRoute = async ({ url }) => {
+    const baseUrl = url.origin
+    const params = {
+        code: url.searchParams.get("code"),
+        error: url.searchParams.get("error"),
+    }
+
+    const result = callbackParamsSchema(params)
+    if (result instanceof type.errors) {
+        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=invalid_params`, 302)
+    }
+
+    if (!result.success) {
         return Response.redirect(
-            `${baseUrl}/bad-onboarding?spotify_error=${encodeURIComponent(error)}`,
+            `${baseUrl}/bad-onboarding?spotify_error=${encodeURIComponent(result.error)}`,
             302
         )
     }
 
-    if (!code) {
-        return Response.redirect(`${baseUrl}/bad-onboarding?spotify_error=missing_code`, 302)
-    }
+    const code = result.code
 
     const clientId = import.meta.env.SPOTIFY_CLIENT_ID
     const clientSecret = import.meta.env.SPOTIFY_CLIENT_SECRET
