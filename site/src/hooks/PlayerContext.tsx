@@ -155,6 +155,7 @@ export function PlayerProvider({
                     return
                 }
 
+                const positionMs = !initialSeekDone.current && initialTimeMs > 0 ? initialTimeMs : 0
                 await fetch("/api/spotify/play", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -162,8 +163,14 @@ export function PlayerProvider({
                         device_id: spotifyDeviceId,
                         context_uri: `spotify:playlist:${playlistSpotifyId}`,
                         offset: { uri: `spotify:track:${trackSpotifyId}` },
+                        position_ms: positionMs,
                     }),
                 })
+
+                if (!initialSeekDone.current) {
+                    setCurrentTimeMs(positionMs)
+                    initialSeekDone.current = true
+                }
                 return
             }
 

@@ -6,6 +6,7 @@ const playRequestSchema = type({
     device_id: "string",
     context_uri: "string",
     offset: type({ uri: "string" }).or({ position: "number" }),
+    "position_ms?": "number",
 })
 
 export const PUT: APIRoute = async ({ request }) => {
@@ -26,7 +27,7 @@ export const PUT: APIRoute = async ({ request }) => {
         return errorResponse(`Invalid request body: ${result.summary}`, 400)
     }
 
-    const { device_id, context_uri, offset } = result
+    const { device_id, context_uri, offset, position_ms } = result
 
     const playResponse = await fetch(
         `https://api.spotify.com/v1/me/player/play${device_id ? `?device_id=${device_id}` : ""}`,
@@ -36,7 +37,7 @@ export const PUT: APIRoute = async ({ request }) => {
                 Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ context_uri, offset }),
+            body: JSON.stringify({ context_uri, offset, position_ms }),
         }
     )
 
