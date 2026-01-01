@@ -3,7 +3,7 @@ import { navigate } from "astro:transitions/client"
 import { Button } from "./ui/button"
 import { SpoitfyIcon } from "./icons"
 
-export const SpotifyStatus = () => {
+export const SpotifyStatus = ({ onNavigate }: { onNavigate?: () => void }) => {
     const { spotifyUser, spotifyLogin } = useSpotify()
 
     return (
@@ -14,7 +14,7 @@ export const SpotifyStatus = () => {
                 if (!spotifyUser) {
                     spotifyLogin()
                 } else {
-                    navigate("/spotify/add");
+                    onNavigate ? onNavigate() : navigate("/spotify/add")
                 }
             }}
         >

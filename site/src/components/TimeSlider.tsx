@@ -9,7 +9,7 @@ import { navigate } from "astro:transitions/client"
 
 export interface TimeSliderProps {
     expanded: boolean
-    onViewChange?: (view: "player" | "playlists") => void
+    onViewChange?: (view: "player" | "playlists" | "spotify-add") => void
 }
 
 export const TimeSlider = ({ expanded, onViewChange }: TimeSliderProps) => {
@@ -46,7 +46,7 @@ export const TimeSlider = ({ expanded, onViewChange }: TimeSliderProps) => {
                     </Button>
                 )}
                 <div className="flex gap-2 items-center lg:flex-col lg:items-start">
-                    <SpotifyStatus />
+                    <SpotifyStatus onNavigate={onViewChange ? () => onViewChange("spotify-add") : undefined} />
                     <AddBandcampButton text="Add Album" />
                 </div>
             </div>

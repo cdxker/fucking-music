@@ -8,7 +8,7 @@ import { Check } from "lucide-react"
 
 const ITEMS_PER_PAGE = 20
 
-function SpotifyAddContent() {
+export function SpotifyAddContent({ onBack }: { onBack?: () => void }) {
     const { spotifyUser, addSpotifyPlaylist, isLoadingUser } = useSpotify()
     const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -21,7 +21,7 @@ function SpotifyAddContent() {
         if (isLoadingUser) return
 
         if (!spotifyUser) {
-            window.location.href = "/player"
+            onBack ? onBack() : (window.location.href = "/player")
             return
         }
 
@@ -43,7 +43,7 @@ function SpotifyAddContent() {
         }
 
         fetchPlaylists()
-    }, [spotifyUser, isLoadingUser, offset])
+    }, [spotifyUser, isLoadingUser, offset, onBack])
 
     const toggleSelection = (playlistId: string) => {
         setSelectedIds((prev) => {
@@ -66,7 +66,7 @@ function SpotifyAddContent() {
             for (const playlist of playlistsToAdd) {
                 await addSpotifyPlaylist(playlist)
             }
-            window.location.href = "/player"
+            onBack ? onBack() : (window.location.href = "/player")
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to add playlists")
             setAdding(false)
@@ -89,12 +89,12 @@ function SpotifyAddContent() {
             <div className="max-w-6xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <a
-                            href="/player"
+                        <button
+                            onClick={() => onBack ? onBack() : (window.location.href = "/player")}
                             className="text-white/50 hover:text-white transition-colors"
                         >
                             &larr; Back
-                        </a>
+                        </button>
                         <div>
                             <h1 className="text-2xl font-bold">Add Spotify Music</h1>
                             <p className="text-white/50">

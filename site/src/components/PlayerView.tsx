@@ -7,8 +7,11 @@ import { cn, formatTime, formatDuration } from "@/lib/utils"
 import { Pause, Play } from "lucide-react"
 import { TimeSlider } from "./TimeSlider"
 import PlayerLayout from "./PlayerLayout"
+import { SpotifyAddContent } from "./SpotifyAddView"
 
-type ViewMode = "player" | "playlists"
+type ViewMode = "player" | "playlists" | "spotify-add"
+
+export type { ViewMode }
 
 function MusicView() {
     const {
@@ -121,11 +124,7 @@ function MusicView() {
 }
 
 function PlaylistsContent({ onPlaylistClick }: { onPlaylistClick: (id: PlaylistId) => void }) {
-    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
-
-    useEffect(() => {
-        setPlaylists(db.getPlaylists())
-    }, [])
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>(() => db.getPlaylists())
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -171,27 +170,26 @@ function PlaylistsContent({ onPlaylistClick }: { onPlaylistClick: (id: PlaylistI
 
 function PlayerView({ initialView = "player" }: { initialView?: ViewMode }) {
     const [view, setView] = useState<ViewMode>(initialView)
-    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>(() => db.getPlaylists())
     const { setPlaylistAndTracks } = usePlayer()
 
     useEffect(() => {
         const handlePopState = () => {
-            setView(window.location.pathname === "/more" ? "playlists" : "player")
+            const path = window.location.pathname
+            if (path === "/more") setView("playlists")
+            else if (path === "/spotify/add") setView("spotify-add")
+            else setView("player")
         }
         window.addEventListener("popstate", handlePopState)
         return () => window.removeEventListener("popstate", handlePopState)
     }, [])
 
     useEffect(() => {
-        const targetPath = view === "playlists" ? "/more" : "/"
+        const targetPath = view === "playlists" ? "/more" : view === "spotify-add" ? "/spotify/add" : "/"
         if (window.location.pathname !== targetPath) {
             window.history.pushState({}, "", targetPath)
         }
     }, [view])
-
-    useEffect(() => {
-        setPlaylists(db.getPlaylists())
-    }, [])
 
     const handlePlaylistClick = (playlistId: PlaylistId) => {
         db.setPlayerState({ lastPlaylistId: playlistId })
@@ -200,12 +198,25 @@ function PlayerView({ initialView = "player" }: { initialView?: ViewMode }) {
     }
 
     return (
-        <div className="flex flex-col min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B] text-white">
-            {view === "playlists" && <TimeSlider expanded onViewChange={setView} />}
-            {view === "player" && playlists.length > 0 && <MusicView />}
-            {view === "player" && playlists.length === 0 && <div></div>}
-            {view === "playlists" && <PlaylistsContent onPlaylistClick={handlePlaylistClick} />}
-            {view === "player" && <TimeSlider expanded={false} onViewChange={setView} />}
+        <div className="flex flex-col min-h-screen bg-[#0B0B0B] text-white">
+            {view === "playlists" && (
+                <div className="px-5 pt-8 pb-12">
+                    <TimeSlider expanded onViewChange={setView} />
+                    <PlaylistsContent onPlaylistClick={handlePlaylistClick} />
+                </div>
+            )}
+            {view === "player" && (
+                <div className="px-5 pt-8 pb-12">
+                    {playlists.length > 0 && <MusicView />}
+                    <TimeSlider expanded={false} onViewChange={setView} />
+                </div>
+            )}
+            {view === "spotify-add" && (
+                <>
+                    <SpotifyAddContent onBack={() => setView("player")} />
+                    <TimeSlider expanded={false} onViewChange={setView} />
+                </>
+            )}
         </div>
     )
 }

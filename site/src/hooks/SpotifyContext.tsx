@@ -113,7 +113,7 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
 
                 setInterval(() => {
                     player.getCurrentState().then((state) => {
-                        setCurrentTimeMs(state.position)
+                        if (state) setCurrentTimeMs(state.position)
                     })
                 } , 250)
 
