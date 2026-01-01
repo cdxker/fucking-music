@@ -7,7 +7,8 @@ export const SpotifyStatus = () => {
 
     return (
         <Button
-            variant={"outline"}
+            variant="outline"
+            size="sm"
             onClick={() => {
                 if (!spotifyUser) {
                     spotifyLogin()

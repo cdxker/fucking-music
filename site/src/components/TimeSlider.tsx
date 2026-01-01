@@ -23,10 +23,12 @@ export const TimeSlider = ({ expanded }: TimeSliderProps) => {
 
     return (
         <div className="max-w-screen z-20 sticky bottom-0 text-white w-full flex flex-col">
-            <div className="bg-[#0B0B0B] flex flex-row space-y-0 flex-wrap items-center justify-center gap-4 p-4 lg:space-y-2 lg:absolute lg:left-4 lg:bottom-4 lg:flex-col lg:flex-nowrap lg:items-start lg:gap-0 lg:pt-2 lg:px-0 lg:pb-0 lg:bg-transparent">
+            <div className="bg-[#0B0B0B] flex flex-row space-y-0 flex-wrap items-center justify-center gap-2 p-4 text-xs lg:text-base lg:space-y-2 lg:absolute lg:left-4 lg:bottom-4 lg:flex-col lg:flex-nowrap lg:items-start lg:gap-0 lg:pt-2 lg:px-0 lg:pb-0 lg:bg-transparent">
                 {!expanded && (
                     <Button
                         variant="outline"
+                        size="sm"
+                        className="lg:size-default"
                         onClick={() => {
                             window.location.href = "/more"
                         }}
@@ -37,6 +39,7 @@ export const TimeSlider = ({ expanded }: TimeSliderProps) => {
                 {expanded && (
                     <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => {
                             window.location.href = "/"
                         }}
@@ -44,10 +47,10 @@ export const TimeSlider = ({ expanded }: TimeSliderProps) => {
                         Return to Player
                     </Button>
                 )}
-                <div className="flex">
+                <div className="flex gap-2 items-center lg:flex-col lg:items-start">
                     <SpotifyStatus />
+                    <AddBandcampButton text="Add Album" />
                 </div>
-                <AddBandcampButton text="Add Album" />
             </div>
             <div className="bg-[#0B0B0B] flex flex-col md:flex-row items-center justify-center">
                 <div className="mb-8 self-center w-full max-w-2xl">
