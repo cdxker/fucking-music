@@ -38,7 +38,7 @@ export interface BandcampPageData {
     keywords?: string[]
 }
 
-export type AudioSource = { type: "stream"; url: string } | { type: "youtube"; id: string }
+export type AudioSource = { type: "stream"; url: string } | { type: "youtube"; id: string } | { type: "spotify"; id: string }
 
 export interface FuckingTrack {
     id: TrackId
@@ -130,7 +130,7 @@ export interface SpotifyPlaylistsResponse {
     offset: number
     previous: string | null
     total: number
-    items: SpotifyPlaylist[]
+    items: FuckingPlaylist[]
 }
 
 export interface SpotifyArtist {
@@ -172,7 +172,7 @@ export interface SpotifyPlaylistTrackItem {
     track: SpotifyTrack | null
 }
 
-export interface SpotifyPlaylistTracksResponse {
+export interface RawSpotifyPlaylistTracksResponse {
     href: string
     limit: number
     next: string | null
@@ -180,4 +180,14 @@ export interface SpotifyPlaylistTracksResponse {
     previous: string | null
     total: number
     items: SpotifyPlaylistTrackItem[]
+}
+
+export interface SpotifyPlaylistTracksResponse {
+    href: string
+    limit: number
+    next: string | null
+    offset: number
+    previous: string | null
+    total: number
+    items: FuckingTrack[]
 }
