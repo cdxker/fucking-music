@@ -12,6 +12,8 @@ export interface SpotifyContextValue {
     spotifyUser: SpotifyUserProfile | null
     spotifyDeviceId: string | null
     spotifyLogin: () => void
+    addSpotifyPlaylist: (playlist: FuckingPlaylist) => Promise<void>
+    isLoadingUser: boolean
 }
 
 const SpotifyContext = createContext<SpotifyContextValue | null>(null)
@@ -23,6 +25,7 @@ interface SpotifyProviderProps {
 
 export function SpotifyProvider({ children }: SpotifyProviderProps) {
     const [spotifyUser, setSpotifyUser] = useState<SpotifyUserProfile | null>(null)
+    const [isLoadingUser, setIsLoadingUser] = useState(true)
     const playerRef = useRef<SpotifyPlayerInstance | null>(null)
 
     const { addPlaylists, addTracks, spotifyDeviceId, setSpotifyDeviceId, setSpotifyPlayer } =
@@ -36,46 +39,30 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
             .then((data: { user: SpotifyUserProfile | null }) => {
                 setSpotifyUser(data.user)
             })
+            .finally(() => {
+                setIsLoadingUser(false)
+            })
     }, [])
 
 
-    const searchPlayists = () => {
+    const addSpotifyPlaylist = useCallback(async (playlist: FuckingPlaylist) => {
+        const spotifyId = playlist.id.replace("play-spotify-", "")
+        const tracksRes = await fetch(
+            `/api/spotify/playlists/${spotifyId}/tracks?limit=50`
+        )
+        const tracksData: SpotifyPlaylistTracksResponse = await tracksRes.json()
+        const tracks = tracksData.items
 
-    }
-
-    useEffect(() => {
-        if (!spotifyUser) return
-        const addSpotifyPlaylist = async (playlist: FuckingPlaylist) => {
-            const spotifyId = playlist.id.replace("play-spotify-", "")
-            const tracksRes = await fetch(
-                `/api/spotify/playlists/${spotifyId}/tracks?limit=50`
-            );
-            const tracksData: SpotifyPlaylistTracksResponse = await tracksRes.json()
-            const tracks = tracksData.items
-
-            if (tracks.length > 0) {
-                playlist.first_track = tracks[0]
-                playlist.totalDurationMs = tracks.reduce(
-                    (sum, t) => sum + t.time_ms,
-                    0
-                )
-            }
-            addPlaylists([playlist])
-            addTracks(tracks, playlist.id)
-        };
-
-        const fetchPlaylistsAndTracks = async () => {
-            const playlistsRes = await fetch("/api/spotify/playlists?limit=50")
-            const playlistsData: SpotifyPlaylistsResponse = await playlistsRes.json()
-            const spotifyPlaylists = playlistsData.items
-            if (!spotifyPlaylists || spotifyPlaylists.length == 0) return
-
-            for (const spotifyPlaylist of spotifyPlaylists) {
-                addSpotifyPlaylist(spotifyPlaylist)
-            }
+        if (tracks.length > 0) {
+            playlist.first_track = tracks[0]
+            playlist.totalDurationMs = tracks.reduce(
+                (sum, t) => sum + t.time_ms,
+                0
+            )
         }
-        fetchPlaylistsAndTracks()
-    }, [spotifyUser, addPlaylists, addTracks])
+        addPlaylists([playlist])
+        addTracks(tracks, playlist.id)
+    }, [addPlaylists, addTracks])
 
     useEffect(() => {
         if (!spotifyUser) return
@@ -144,6 +131,8 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
         spotifyUser,
         spotifyDeviceId,
         spotifyLogin,
+        addSpotifyPlaylist,
+        isLoadingUser,
     }
 
     return <SpotifyContext.Provider value={value}>{children}</SpotifyContext.Provider>

@@ -8,15 +8,18 @@ export const SpotifyStatus = () => {
     return (
         <Button
             onClick={() => {
-                if (!spotifyUser) spotifyLogin()
+                if (!spotifyUser) {
+                    spotifyLogin()
+                } else {
+                    window.location.href = "/spotify/add"
+                }
             }}
         >
             <div className="w-6 h-6">
                 <SpoitfyIcon />
             </div>
             {!spotifyUser && <p>Connect Spotify</p>}
-
-            {spotifyUser && <p>Connected as {spotifyUser.display_name}</p>}
+            {spotifyUser && <p>Add Spotify Music</p>}
         </Button>
     )
 }
