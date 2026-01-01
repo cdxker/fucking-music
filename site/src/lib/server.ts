@@ -12,22 +12,13 @@ export function parseCookies(cookieHeader: string | null): Record<string, string
     )
 }
 
-export function getAccessToken(request: Request): string | null {
+export async function getSpotifyAccessToken(request: Request): Promise<string | null> {
     const cookies = parseCookies(request.headers.get("cookie"))
-    return cookies.spotify_access_token || null
-}
+    const refreshToken = cookies.spotify_refresh_token
+    if (!refreshToken) {
+        return null
+    }
 
-export function getRefreshToken(request: Request): string | null {
-    const cookies = parseCookies(request.headers.get("cookie"))
-    return cookies.spotify_refresh_token || null
-}
-
-export interface RefreshResult {
-    accessToken: string
-    setCookieHeader: string
-}
-
-export async function refreshAccessToken(refreshToken: string): Promise<RefreshResult | null> {
     const clientId = import.meta.env.SPOTIFY_CLIENT_ID
     const clientSecret = import.meta.env.SPOTIFY_CLIENT_SECRET
 
@@ -52,10 +43,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<RefreshR
     }
 
     const data = await tokenResponse.json()
-    return {
-        accessToken: data.access_token,
-        setCookieHeader: `spotify_access_token=${data.access_token}; ${COOKIE_OPTIONS}`,
-    }
+    return data.access_token
 }
 
 export function jsonResponse<T>(data: T, status = 200): Response {

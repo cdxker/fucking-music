@@ -81,7 +81,6 @@ export const GET: APIRoute = async ({ url }) => {
             status: 302,
             headers: [
                 ["Location", `${baseUrl}/spotify`],
-                ["Set-Cookie", `spotify_access_token=${tokenData.access_token}; ${COOKIE_OPTIONS}`],
                 [
                     "Set-Cookie",
                     `spotify_refresh_token=${tokenData.refresh_token}; ${COOKIE_OPTIONS}`,

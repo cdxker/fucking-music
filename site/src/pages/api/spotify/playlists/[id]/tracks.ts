@@ -1,27 +1,19 @@
 import type { APIRoute } from "astro"
-import type { SpotifyPlaylistTracksResponse } from "@/shared/types"
-import {
-    getAccessToken,
-    getRefreshToken,
-    refreshAccessToken,
-    jsonResponse,
-    errorResponse,
-    parsePaginationParams,
-} from "@/lib/server"
+import type { FuckingTrack, RawSpotifyPlaylistTracksResponse, SpotifyPlaylistTracksResponse, SpotifyTrack } from "@/shared/types"
+import { getSpotifyAccessToken, jsonResponse, errorResponse, parsePaginationParams } from "@/lib/server"
 
-async function fetchTracks(accessToken: string, playlistId: string, limit: number, offset: number) {
-    return fetch(
-        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`,
-        {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        }
-    )
+const spotifyTrackToFuckingTrack = (track: SpotifyTrack): FuckingTrack => {
+    return {
+        id: `track-spotify-${track.id}`,
+        time_ms: track.duration_ms,
+        name: track.name,
+        artists: track.artists.map((a) => a.name),
+        audio: { type: "spotify", id: track.id },
+    }
 }
 
 export const GET: APIRoute = async ({ params, request, url }) => {
-    let accessToken = getAccessToken(request)
+    const accessToken = await getSpotifyAccessToken(request)
     const playlistId = params.id
 
     if (!accessToken) {
@@ -34,40 +26,22 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 
     const { limit, offset } = parsePaginationParams(url)
 
-    let tracksResponse = await fetchTracks(accessToken, playlistId, limit, offset)
-
-    if (tracksResponse.status === 401) {
-        const refreshToken = getRefreshToken(request)
-        if (!refreshToken) {
-            return errorResponse("Not authenticated", 401)
-        }
-
-        const refreshResult = await refreshAccessToken(refreshToken)
-        if (!refreshResult) {
-            return errorResponse("Failed to refresh token", 401)
-        }
-
-        accessToken = refreshResult.accessToken
-        tracksResponse = await fetchTracks(accessToken, playlistId, limit, offset)
-
-        if (!tracksResponse.ok) {
-            return errorResponse("Failed to fetch tracks", tracksResponse.status)
-        }
-
-        const tracks: SpotifyPlaylistTracksResponse = await tracksResponse.json()
-        return new Response(JSON.stringify(tracks), {
-            status: 200,
-            headers: {
-                "Content-Type": "application/json",
-                "Set-Cookie": refreshResult.setCookieHeader,
-            },
-        })
-    }
+    const tracksResponse = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+    )
 
     if (!tracksResponse.ok) {
         return errorResponse("Failed to fetch tracks", tracksResponse.status)
     }
 
-    const tracks: SpotifyPlaylistTracksResponse = await tracksResponse.json()
-    return jsonResponse(tracks)
+    const rawTracks: RawSpotifyPlaylistTracksResponse = await tracksResponse.json()
+    const fuckingTracks: FuckingTrack[] = rawTracks.items
+        .filter((item) => item.track !== null)
+        .map((item) => spotifyTrackToFuckingTrack(item.track!))
+
+    return jsonResponse<SpotifyPlaylistTracksResponse>({
+        ...rawTracks,
+        items: fuckingTracks,
+    })
 }

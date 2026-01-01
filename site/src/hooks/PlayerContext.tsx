@@ -175,6 +175,9 @@ export function PlayerProvider({
 
             if (currentTrack.audio.type === "youtube") {
                 audioUrl = `/api/youtube/stream?id=${currentTrack.audio.id}`
+            } else if (currentTrack.audio.type === "spotify") {
+                // Spotify tracks are played via the Spotify SDK, not HTML audio
+                return
             } else {
                 audioUrl = await musicCache.getOrFetch(currentTrack.id, currentTrack.audio.url)
                 currentBlobUrlRef.current = audioUrl
