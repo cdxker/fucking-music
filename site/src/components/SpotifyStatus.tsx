@@ -1,17 +1,20 @@
 import { useSpotify } from "@/hooks/SpotifyContext"
+import { navigate } from "astro:transitions/client"
 import { Button } from "./ui/button"
 import { SpoitfyIcon } from "./icons"
 
-export const SpotifyStatus = () => {
+export const SpotifyStatus = ({ onNavigate }: { onNavigate?: () => void }) => {
     const { spotifyUser, spotifyLogin } = useSpotify()
 
     return (
         <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
                 if (!spotifyUser) {
                     spotifyLogin()
                 } else {
-                    window.location.href = "/spotify/add"
+                    onNavigate ? onNavigate() : navigate("/spotify/add")
                 }
             }}
         >
@@ -19,7 +22,7 @@ export const SpotifyStatus = () => {
                 <SpoitfyIcon />
             </div>
             {!spotifyUser && <p>Connect Spotify</p>}
-            {spotifyUser && <p>Add Spotify Music</p>}
+            {spotifyUser && <p>Add Playlist</p>}
         </Button>
     )
 }

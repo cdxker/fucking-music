@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { AddMusicButton } from "./AddMusicButton"
+import { AddBandcampButton } from "./AddMusicButton"
 import { Button } from "./ui/button"
 import PlayerLayout from "./PlayerLayout"
 import type { SpotifyUserProfile } from "@/shared/types"
@@ -60,8 +60,6 @@ const OnboardingView = () => {
                     )}
 
                     <p>or to just get started faster</p>
-
-                    <AddMusicButton text="Add music from link" />
                 </div>
             </div>
         </PlayerLayout>

@@ -3,14 +3,15 @@ import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/share
 import { db } from "@/lib/store"
 import SideTrack from "./SideTrack"
 import { usePlayer } from "@/hooks/PlayerContext"
-import { cn, formatTime } from "@/lib/utils"
+import { cn, formatTime, formatDuration } from "@/lib/utils"
 import { Pause, Play } from "lucide-react"
-import { AddMusicButton } from "./AddMusicButton"
 import { TimeSlider } from "./TimeSlider"
 import PlayerLayout from "./PlayerLayout"
-import { SpoitfyIcon } from "./icons"
-import { Button } from "./ui/button"
-import { SpotifyStatus } from "./SpotifyStatus"
+import { SpotifyAddContent } from "./SpotifyAddView"
+
+type ViewMode = "player" | "playlists" | "spotify-add"
+
+export type { ViewMode }
 
 function MusicView() {
     const {
@@ -122,30 +123,110 @@ function MusicView() {
     )
 }
 
-function PlayerView() {
-    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
-
-    useEffect(() => {
-        const init = async () => {
-            await db.init()
-            setPlaylists(db.getPlaylists())
-        }
-        init()
-    }, [])
+function PlaylistsContent({ onPlaylistClick }: { onPlaylistClick: (id: PlaylistId) => void }) {
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>(() => db.getPlaylists())
 
     return (
-        <PlayerLayout>
-            <div className="flex flex-col min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B] text-white">
-                <SpotifyStatus />
-                {playlists.length > 0 && <MusicView />}
-                {playlists.length === 0 && <div></div>}
-                <div className="flex items-center justify-center w-full text-sm">
-                    <AddMusicButton />
-                </div>
-                <TimeSlider expanded={false} />
+        <div className="max-w-2xl mx-auto">
+            <div className="space-y-4">
+                {playlists.map((playlist) => (
+                    <div
+                        key={playlist.id}
+                        className="flex gap-4 cursor-pointer hover:bg-white/5 rounded-lg p-2 -mx-2 transition-colors"
+                        onClick={() => onPlaylistClick(playlist.id)}
+                    >
+                        <img
+                            src={playlist.track_cover_uri}
+                            alt={`${playlist.name} cover`}
+                            className="w-16 h-16 object-cover rounded"
+                        />
+                        <div className="flex flex-col justify-center min-w-0 flex-1">
+                            <span className="text-white font-medium truncate">{playlist.name}</span>
+                            <span className="text-white/50 text-sm">
+                                {playlist.artists[0]} · {formatDuration(playlist.totalDurationMs)}
+                            </span>
+                            {playlist.first_track.tags && playlist.first_track.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {playlist.first_track.tags.slice(0, 5).map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="px-2 py-0.5 text-xs text-white/60 border border-white/20 rounded-full"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
             </div>
+            {playlists.length === 0 && (
+                <div className="text-white/40 text-center py-16">No playlists yet. Add some music!</div>
+            )}
+        </div>
+    )
+}
+
+function PlayerView({ initialView = "player" }: { initialView?: ViewMode }) {
+    const [view, setView] = useState<ViewMode>(initialView)
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>(() => db.getPlaylists())
+    const { setPlaylistAndTracks } = usePlayer()
+
+    useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname
+            if (path === "/more") setView("playlists")
+            else if (path === "/spotify/add") setView("spotify-add")
+            else setView("player")
+        }
+        window.addEventListener("popstate", handlePopState)
+        return () => window.removeEventListener("popstate", handlePopState)
+    }, [])
+
+    useEffect(() => {
+        const targetPath = view === "playlists" ? "/more" : view === "spotify-add" ? "/spotify/add" : "/"
+        if (window.location.pathname !== targetPath) {
+            window.history.pushState({}, "", targetPath)
+        }
+    }, [view])
+
+    const handlePlaylistClick = (playlistId: PlaylistId) => {
+        db.setPlayerState({ lastPlaylistId: playlistId })
+        setPlaylistAndTracks({ playlistId })
+        setView("player")
+    }
+
+    return (
+        <div className="flex flex-col min-h-screen bg-[#0B0B0B] text-white">
+            {view === "playlists" && (
+                <div className="px-5 pt-8 pb-12">
+                    <TimeSlider expanded onViewChange={setView} />
+                    <PlaylistsContent onPlaylistClick={handlePlaylistClick} />
+                </div>
+            )}
+            {view === "player" && (
+                <div className="px-5 pt-8 pb-12">
+                    {playlists.length > 0 && <MusicView />}
+                    <TimeSlider expanded={false} onViewChange={setView} />
+                </div>
+            )}
+            {view === "spotify-add" && (
+                <>
+                    <SpotifyAddContent onBack={() => setView("player")} />
+                    <TimeSlider expanded={false} onViewChange={setView} />
+                </>
+            )}
+        </div>
+    )
+}
+
+function PlayerViewWithLayout({ initialView = "player" }: { initialView?: ViewMode }) {
+    return (
+        <PlayerLayout>
+            <PlayerView initialView={initialView} />
         </PlayerLayout>
     )
 }
 
-export default PlayerView
+export default PlayerViewWithLayout

@@ -30,7 +30,10 @@ export interface PlayerContextValue {
 
     togglePlayPause: () => void
     handleSeek: (value: number) => void
-    handleTrackSelect: (index: number) => void
+    handleTrackSelect: (index: number) => Promise<void>
+    handleNextTrack: () => Promise<void>
+    handlePrevTrack: () => Promise<void>
+    setCurrentTimeMs: (timeMs: number) => void
     addPlaylists: (playlists: FuckingPlaylist[]) => void
     addTracks: (tracks: FuckingTrack[], playlistId: PlaylistId) => void
 
@@ -70,8 +73,6 @@ export function PlayerProvider({
 
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const initialSeekDone = useRef(false)
-    const currentTimeMsRef = useRef(initialTimeMs)
-    const currentBlobUrlRef = useRef<string | null>(null)
 
     const currentTrack = tracks.length > 0 ? tracks[currentTrackIndex] : null
     const totalDuration = currentTrack?.time_ms ?? 0
@@ -99,7 +100,6 @@ export function PlayerProvider({
             setTracks(tracks)
             setCurrentTrackIndex(startingTrackIndex)
             setCurrentTimeMs(0)
-            currentTimeMsRef.current = 0
             initialSeekDone.current = true
             const activeTrack = tracks[startingTrackIndex]?.id
             db.setPlayerState({ lastPlaylistId: playlist.id, activeTrack, trackTimestamp: 0 })
@@ -142,13 +142,9 @@ export function PlayerProvider({
         }
 
         let cancelled = false
+        let blobUrl: string | null = null
 
         const loadAudio = async () => {
-            if (currentBlobUrlRef.current) {
-                URL.revokeObjectURL(currentBlobUrlRef.current)
-                currentBlobUrlRef.current = null
-            }
-
             // For Spotify playlists, use Spotify's playback API
             if (playlist?.source === "spotify") {
                 const playlistSpotifyId = playlist.id.replace("play-spotify-", "")
@@ -159,6 +155,7 @@ export function PlayerProvider({
                     return
                 }
 
+                const positionMs = !initialSeekDone.current && initialTimeMs > 0 ? initialTimeMs : 0
                 await fetch("/api/spotify/play", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -166,8 +163,14 @@ export function PlayerProvider({
                         device_id: spotifyDeviceId,
                         context_uri: `spotify:playlist:${playlistSpotifyId}`,
                         offset: { uri: `spotify:track:${trackSpotifyId}` },
+                        position_ms: positionMs,
                     }),
                 })
+
+                if (!initialSeekDone.current) {
+                    setCurrentTimeMs(positionMs)
+                    initialSeekDone.current = true
+                }
                 return
             }
 
@@ -180,12 +183,12 @@ export function PlayerProvider({
                 return
             } else {
                 audioUrl = await musicCache.getOrFetch(currentTrack.id, currentTrack.audio.url)
-                currentBlobUrlRef.current = audioUrl
+                blobUrl = audioUrl
             }
 
             if (cancelled) {
-                if (currentBlobUrlRef.current) {
-                    URL.revokeObjectURL(currentBlobUrlRef.current)
+                if (blobUrl) {
+                    URL.revokeObjectURL(blobUrl)
                 }
                 return
             }
@@ -236,7 +239,6 @@ export function PlayerProvider({
         const handleTimeUpdate = () => {
             const timeMs = audio.currentTime * 1000
             setCurrentTimeMs(timeMs)
-            currentTimeMsRef.current = timeMs
         }
 
         const handleEnded = () => {
@@ -259,9 +261,9 @@ export function PlayerProvider({
     const savePlayerState = useCallback(() => {
         const trackId = tracks[currentTrackIndex]?.id
         if (trackId) {
-            db.setPlayerState({ activeTrack: trackId, trackTimestamp: currentTimeMsRef.current })
+            db.setPlayerState({ activeTrack: trackId, trackTimestamp: currentTimeMs })
         }
-    }, [tracks, currentTrackIndex])
+    }, [tracks, currentTrackIndex, currentTimeMs])
 
     useEffect(() => {
         if (!currentTrack) return
@@ -275,9 +277,6 @@ export function PlayerProvider({
     useEffect(() => {
         return () => {
             savePlayerState()
-            if (currentBlobUrlRef.current) {
-                URL.revokeObjectURL(currentBlobUrlRef.current)
-            }
         }
     }, [savePlayerState])
 
@@ -300,21 +299,62 @@ export function PlayerProvider({
         setIsPlaying(!isPlaying)
     }, [isPlaying, playlist])
 
-    const handleSeek = useCallback((value: number) => {
-        const audio = audioRef.current
-        if (!audio) return
+    const handleSeek = useCallback(
+        (value: number) => {
+            // For Spotify, use the Spotify player's seek
+            if (playlist?.source === "spotify") {
+                spotifyPlayerRef.current?.seek(value)
+                setCurrentTimeMs(value)
+                return
+            }
 
-        audio.currentTime = value / 1000
-        setCurrentTimeMs(value)
-        currentTimeMsRef.current = value
-    }, [])
+            const audio = audioRef.current
+            if (!audio) return
 
-    const handleTrackSelect = useCallback((index: number) => {
-        setCurrentTrackIndex(index)
-        setCurrentTimeMs(0)
-        currentTimeMsRef.current = 0
-        setIsPlaying(true)
-    }, [])
+            audio.currentTime = value / 1000
+            setCurrentTimeMs(value)
+        },
+        [playlist]
+    )
+
+    const handleTrackSelect = useCallback(
+        async (index: number) => {
+            setCurrentTrackIndex(index)
+            setCurrentTimeMs(0)
+            setIsPlaying(true)
+
+            // For Spotify, explicitly trigger playback of the selected track
+            if (playlist?.source === "spotify" && spotifyDeviceId) {
+                const playlistSpotifyId = playlist.id.replace("play-spotify-", "")
+                const selectedTrack = tracks[index]
+                if (selectedTrack) {
+                    const trackSpotifyId = selectedTrack.id.replace("track-spotify-", "")
+                    await fetch("/api/spotify/play", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            device_id: spotifyDeviceId,
+                            context_uri: `spotify:playlist:${playlistSpotifyId}`,
+                            offset: { uri: `spotify:track:${trackSpotifyId}` },
+                        }),
+                    })
+                }
+            }
+        },
+        [playlist, spotifyDeviceId, tracks]
+    )
+
+    const handleNextTrack = useCallback(async () => {
+        if (currentTrackIndex < tracks.length - 1) {
+            await handleTrackSelect(currentTrackIndex + 1)
+        }
+    }, [currentTrackIndex, tracks.length, handleTrackSelect])
+
+    const handlePrevTrack = useCallback(async () => {
+        if (currentTrackIndex > 0) {
+            await handleTrackSelect(currentTrackIndex - 1)
+        }
+    }, [currentTrackIndex, handleTrackSelect])
 
     const value: PlayerContextValue = {
         playlist,
@@ -328,6 +368,9 @@ export function PlayerProvider({
         togglePlayPause,
         handleSeek,
         handleTrackSelect,
+        handleNextTrack,
+        handlePrevTrack,
+        setCurrentTimeMs,
         addPlaylists,
         addTracks,
         spotifyDeviceId,
