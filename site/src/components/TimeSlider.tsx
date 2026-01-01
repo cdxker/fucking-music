@@ -5,12 +5,14 @@ import * as Slider from "@radix-ui/react-slider"
 import { SpotifyStatus } from "./SpotifyStatus"
 import { Button } from "./ui/button"
 import { AddBandcampButton } from "./AddMusicButton"
+import { navigate } from "astro:transitions/client"
 
 export interface TimeSliderProps {
     expanded: boolean
+    onViewChange?: (view: "player" | "playlists") => void
 }
 
-export const TimeSlider = ({ expanded }: TimeSliderProps) => {
+export const TimeSlider = ({ expanded, onViewChange }: TimeSliderProps) => {
     const {
         totalDuration,
         handleSeek,
@@ -29,9 +31,7 @@ export const TimeSlider = ({ expanded }: TimeSliderProps) => {
                         variant="outline"
                         size="sm"
                         className="lg:size-default"
-                        onClick={() => {
-                            window.location.href = "/more"
-                        }}
+                        onClick={() => onViewChange ? onViewChange("playlists") : navigate("/more")}
                     >
                         View full rotation
                     </Button>
@@ -40,9 +40,7 @@ export const TimeSlider = ({ expanded }: TimeSliderProps) => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                            window.location.href = "/"
-                        }}
+                        onClick={() => onViewChange ? onViewChange("player") : navigate("/")}
                     >
                         Return to Player
                     </Button>

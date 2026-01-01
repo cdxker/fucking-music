@@ -1,4 +1,5 @@
 import { useSpotify } from "@/hooks/SpotifyContext"
+import { navigate } from "astro:transitions/client"
 import { Button } from "./ui/button"
 import { SpoitfyIcon } from "./icons"
 
@@ -13,7 +14,7 @@ export const SpotifyStatus = () => {
                 if (!spotifyUser) {
                     spotifyLogin()
                 } else {
-                    window.location.href = "/spotify/add"
+                    navigate("/spotify/add");
                 }
             }}
         >
