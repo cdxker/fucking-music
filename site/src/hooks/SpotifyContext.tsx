@@ -1,7 +1,14 @@
-import { createContext, useState, useEffect, useContext, useRef, type ReactNode, useCallback } from "react"
+import {
+    createContext,
+    useState,
+    useEffect,
+    useContext,
+    useRef,
+    type ReactNode,
+    useCallback,
+} from "react"
 import type {
     FuckingPlaylist,
-    SpotifyPlaylistsResponse,
     SpotifyPlaylistTracksResponse,
     SpotifyUserProfile,
 } from "@/shared/types"
@@ -22,14 +29,19 @@ interface SpotifyProviderProps {
     children: ReactNode
 }
 
-
 export function SpotifyProvider({ children }: SpotifyProviderProps) {
     const [spotifyUser, setSpotifyUser] = useState<SpotifyUserProfile | null>(null)
     const [isLoadingUser, setIsLoadingUser] = useState(true)
     const playerRef = useRef<SpotifyPlayerInstance | null>(null)
 
-    const { addPlaylists, addTracks, spotifyDeviceId, setSpotifyDeviceId, setSpotifyPlayer } =
-        usePlayer()
+    const {
+        addPlaylists,
+        addTracks,
+        spotifyDeviceId,
+        setSpotifyDeviceId,
+        setSpotifyPlayer,
+        setCurrentTimeMs,
+    } = usePlayer()
 
     useEffect(() => {
         fetch("/api/spotify/me", {
@@ -44,25 +56,22 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
             })
     }, [])
 
+    const addSpotifyPlaylist = useCallback(
+        async (playlist: FuckingPlaylist) => {
+            const spotifyId = playlist.id.replace("play-spotify-", "")
+            const tracksRes = await fetch(`/api/spotify/playlists/${spotifyId}/tracks?limit=50`)
+            const tracksData: SpotifyPlaylistTracksResponse = await tracksRes.json()
+            const tracks = tracksData.items
 
-    const addSpotifyPlaylist = useCallback(async (playlist: FuckingPlaylist) => {
-        const spotifyId = playlist.id.replace("play-spotify-", "")
-        const tracksRes = await fetch(
-            `/api/spotify/playlists/${spotifyId}/tracks?limit=50`
-        )
-        const tracksData: SpotifyPlaylistTracksResponse = await tracksRes.json()
-        const tracks = tracksData.items
-
-        if (tracks.length > 0) {
-            playlist.first_track = tracks[0]
-            playlist.totalDurationMs = tracks.reduce(
-                (sum, t) => sum + t.time_ms,
-                0
-            )
-        }
-        addPlaylists([playlist])
-        addTracks(tracks, playlist.id)
-    }, [addPlaylists, addTracks])
+            if (tracks.length > 0) {
+                playlist.first_track = tracks[0]
+                playlist.totalDurationMs = tracks.reduce((sum, t) => sum + t.time_ms, 0)
+            }
+            addPlaylists([playlist])
+            addTracks(tracks, playlist.id)
+        },
+        [addPlaylists, addTracks]
+    )
 
     useEffect(() => {
         if (!spotifyUser) return
@@ -102,6 +111,12 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
                     setSpotifyDeviceId(null)
                 })
 
+                setInterval(() => {
+                    player.getCurrentState().then((state) => {
+                        setCurrentTimeMs(state.position)
+                    })
+                } , 250)
+
                 player.connect()
                 playerRef.current = player
                 setSpotifyPlayer(player)
@@ -121,7 +136,7 @@ export function SpotifyProvider({ children }: SpotifyProviderProps) {
             playerRef.current = null
             setSpotifyPlayer(null)
         }
-    }, [spotifyUser, setSpotifyPlayer, setSpotifyDeviceId])
+    }, [spotifyUser, setSpotifyPlayer, setSpotifyDeviceId, setCurrentTimeMs])
 
     const spotifyLogin = () => {
         window.location.href = "/api/spotify/authorize"

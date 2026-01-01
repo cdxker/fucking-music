@@ -4,7 +4,6 @@ import { db } from "@/lib/store"
 import { TimeSlider } from "./TimeSlider"
 import { formatDuration } from "@/lib/utils"
 import PlayerLayout from "./PlayerLayout"
-import { AddMusicButton } from "./AddMusicButton"
 
 export default function PlaylistsView() {
     const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
@@ -74,10 +73,6 @@ export default function PlaylistsView() {
                             No playlists yet. Add some music!
                         </div>
                     )}
-
-                    <div className="flex justify-center mt-12">
-                        <AddMusicButton />
-                    </div>
                 </div>
             </div>
         </PlayerLayout>

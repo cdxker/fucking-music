@@ -7,6 +7,7 @@ export const SpotifyStatus = () => {
 
     return (
         <Button
+            variant={"outline"}
             onClick={() => {
                 if (!spotifyUser) {
                     spotifyLogin()
@@ -19,7 +20,7 @@ export const SpotifyStatus = () => {
                 <SpoitfyIcon />
             </div>
             {!spotifyUser && <p>Connect Spotify</p>}
-            {spotifyUser && <p>Add Spotify Music</p>}
+            {spotifyUser && <p>Add Playlist</p>}
         </Button>
     )
 }

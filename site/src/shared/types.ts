@@ -38,7 +38,10 @@ export interface BandcampPageData {
     keywords?: string[]
 }
 
-export type AudioSource = { type: "stream"; url: string } | { type: "youtube"; id: string } | { type: "spotify"; id: string }
+export type AudioSource =
+    | { type: "stream"; url: string }
+    | { type: "youtube"; id: string }
+    | { type: "spotify"; id: string }
 
 export interface FuckingTrack {
     id: TrackId

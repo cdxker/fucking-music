@@ -1,75 +1,96 @@
 import { usePlayer } from "@/hooks/PlayerContext"
-import {
-    ArrowDown,
-    ArrowUp,
-    FastForward,
-    Pause,
-    Play,
-    Rewind,
-    SkipBack,
-    SkipForward,
-} from "lucide-react"
+import { FastForward, Pause, Play, Rewind, SkipBack, SkipForward } from "lucide-react"
 import { formatTime } from "@/lib/utils"
 import * as Slider from "@radix-ui/react-slider"
+import { SpotifyStatus } from "./SpotifyStatus"
+import { Button } from "./ui/button"
+import { AddBandcampButton } from "./AddMusicButton"
 
 export interface TimeSliderProps {
     expanded: boolean
 }
 
 export const TimeSlider = ({ expanded }: TimeSliderProps) => {
-    const { totalDuration, handleSeek, currentTimeMs, isPlaying, togglePlayPause } = usePlayer()
+    const {
+        totalDuration,
+        handleSeek,
+        currentTimeMs,
+        isPlaying,
+        togglePlayPause,
+        handleNextTrack,
+        handlePrevTrack,
+    } = usePlayer()
 
     return (
-        <div className="bg-[#0B0B0B] flex justify-around max-w-screen z-20 sticky bottom-0">
-            <div className="my-8">
+        <div className="max-w-screen z-20 sticky bottom-0 text-white w-full flex flex-col">
+            <div className="bg-[#0B0B0B] flex flex-row space-y-0 flex-wrap items-center justify-center gap-4 p-4 lg:space-y-2 lg:absolute lg:left-4 lg:bottom-4 lg:flex-col lg:flex-nowrap lg:items-start lg:gap-0 lg:pt-2 lg:px-0 lg:pb-0 lg:bg-transparent">
                 {!expanded && (
-                    <a href="/more">
-                        <ArrowUp color="#fff" />
-                    </a>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            window.location.href = "/more"
+                        }}
+                    >
+                        View full rotation
+                    </Button>
                 )}
                 {expanded && (
-                    <a href="/less">
-                        <ArrowDown color="#fff" />
-                    </a>
-                )}
-            </div>
-            <div className="my-8 w-2xl">
-                <Slider.Root
-                    className="relative flex items-center select-none touch-none w-full h-5"
-                    value={[currentTimeMs]}
-                    max={totalDuration}
-                    step={1000}
-                    onValueChange={([value]) => handleSeek(value)}
-                >
-                    <Slider.Track className="bg-[#6B8CC7] relative grow rounded-full h-2">
-                        <Slider.Range className="absolute bg-[#3B5998] rounded-full h-full" />
-                    </Slider.Track>
-                    <Slider.Thumb className="block w-3 h-3 bg-[#E85A4F] rounded-full focus:outline-none" />
-                </Slider.Root>
-
-                <div className="flex justify-between mt-2 text-white/70 z-20 text-sm">
-                    <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 text-sm">
-                        {formatTime(currentTimeMs)}
-                    </span>
-                    <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 text-sm">
-                        {formatTime(totalDuration)}
-                    </span>
-                </div>
-                <div className="flex items-center justify-center space-x-3">
-                    <SkipBack color="#fff" />
-                    <Rewind color="#fff" />
-                    <div
-                        className="rounded-full bg-white text-black px-2 py-2"
-                        onClick={togglePlayPause}
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            window.location.href = "/"
+                        }}
                     >
-                        {!isPlaying && <Play />}
-                        {isPlaying && <Pause />}
+                        Return to Player
+                    </Button>
+                )}
+                <div className="flex">
+                    <SpotifyStatus />
+                </div>
+                <AddBandcampButton text="Add Album" />
+            </div>
+            <div className="bg-[#0B0B0B] flex flex-col md:flex-row items-center justify-center">
+                <div className="mb-8 self-center w-full max-w-2xl">
+                    <Slider.Root
+                        className="relative flex items-center select-none touch-none w-full h-5"
+                        value={[currentTimeMs]}
+                        max={totalDuration}
+                        step={1000}
+                        onValueChange={([value]) => handleSeek(value)}
+                    >
+                        <Slider.Track className="bg-[#6B8CC7] relative grow rounded-full h-2">
+                            <Slider.Range className="absolute bg-[#3B5998] rounded-full h-full" />
+                        </Slider.Track>
+                        <Slider.Thumb className="block w-3 h-3 bg-[#E85A4F] rounded-full focus:outline-none" />
+                    </Slider.Root>
+
+                    <div className="flex justify-between mt-2 text-white/70 z-20 text-sm">
+                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 text-sm">
+                            {formatTime(currentTimeMs)}
+                        </span>
+                        <span className="bg-[radial-gradient(circle,#0B0B0B_0%,rgba(11,11,11,0.6)_50%,rgba(11,11,11,0.1)_100%)] z-20 text-sm">
+                            {formatTime(totalDuration)}
+                        </span>
                     </div>
-                    <FastForward color="#fff" />
-                    <SkipForward color="#fff" />
+                    <div className="flex items-center justify-center space-x-3">
+                        <SkipBack color="#fff" className="cursor-pointer" onClick={handlePrevTrack} />
+                        {/* <Rewind color="#fff" />*/}
+                        <div
+                            className="rounded-full bg-white text-black px-2 py-2 cursor-pointer"
+                            onClick={togglePlayPause}
+                        >
+                            {!isPlaying && <Play />}
+                            {isPlaying && <Pause />}
+                        </div>
+                        {/*<FastForward color="#fff" />*/}
+                        <SkipForward
+                            color="#fff"
+                            className="cursor-pointer"
+                            onClick={handleNextTrack}
+                        />
+                    </div>
                 </div>
             </div>
-            <div></div>
         </div>
     )
 }

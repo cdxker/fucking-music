@@ -1,6 +1,11 @@
 import type { APIRoute } from "astro"
 import type { FuckingPlaylist, SpotifyPlaylist, SpotifyPlaylistsResponse } from "@/shared/types"
-import { getSpotifyAccessToken, jsonResponse, errorResponse, parsePaginationParams } from "@/lib/server"
+import {
+    getSpotifyAccessToken,
+    jsonResponse,
+    errorResponse,
+    parsePaginationParams,
+} from "@/lib/server"
 
 interface RawSpotifyPlaylistsResponse {
     href: string

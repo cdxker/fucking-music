@@ -1,6 +1,16 @@
 import type { APIRoute } from "astro"
-import type { FuckingTrack, RawSpotifyPlaylistTracksResponse, SpotifyPlaylistTracksResponse, SpotifyTrack } from "@/shared/types"
-import { getSpotifyAccessToken, jsonResponse, errorResponse, parsePaginationParams } from "@/lib/server"
+import type {
+    FuckingTrack,
+    RawSpotifyPlaylistTracksResponse,
+    SpotifyPlaylistTracksResponse,
+    SpotifyTrack,
+} from "@/shared/types"
+import {
+    getSpotifyAccessToken,
+    jsonResponse,
+    errorResponse,
+    parsePaginationParams,
+} from "@/lib/server"
 
 const spotifyTrackToFuckingTrack = (track: SpotifyTrack): FuckingTrack => {
     return {

@@ -2,8 +2,9 @@ import { useState } from "react"
 import { Button } from "./ui/button"
 import { usePlayer } from "@/hooks/PlayerContext"
 import { db } from "@/lib/store"
+import { Check, X } from "lucide-react"
 
-export const AddMusicButton = ({ text }: { text?: string }) => {
+export const AddBandcampButton = ({ text }: { text?: string }) => {
     const [showInput, setShowInput] = useState(false)
     const [inputValue, setInputValue] = useState("")
     const { setPlaylistAndTracks } = usePlayer()
@@ -46,36 +47,36 @@ export const AddMusicButton = ({ text }: { text?: string }) => {
 
     if (showInput) {
         return (
-            <div className="flex flex-col gap-4 w-full max-w-md">
+            <div className="flex gap-2">
                 <input
                     type="url"
-                    placeholder="Paste Bandcamp URL..."
+                    placeholder="Paste URL..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                    className="w-full px-4 py-3 text-lg text-white bg-transparent border border-white/30 rounded-md focus:outline-none focus:border-white/60"
+                    className="px-2 py-2 text-white text-sm border rounded-md focus:outline-none"
                     autoFocus
                 />
                 <div className="flex gap-2">
                     <Button
                         variant="outline"
                         size="default"
-                        className="flex-1 text-white/70"
+                        className="text-white"
                         onClick={() => {
                             setShowInput(false)
                             setInputValue("")
                         }}
                     >
-                        Cancel
+                        <X />
                     </Button>
                     <Button
                         variant="outline"
                         size="default"
-                        className="flex-1 text-white/70"
+                        className="text-white"
                         onClick={handleSubmit}
                         disabled={!inputValue.trim()}
                     >
-                        Load
+                        <Check />
                     </Button>
                 </div>
             </div>
@@ -86,9 +87,12 @@ export const AddMusicButton = ({ text }: { text?: string }) => {
         <Button
             variant="outline"
             size="default"
-            className="text-white/70"
+            className="text-white"
             onClick={() => setShowInput(true)}
         >
+            <div className="w-4 h-4">
+                <img src="/bandcamp-logo.png" alt="" />
+            </div>
             {text || "Add Music"}
         </Button>
     )

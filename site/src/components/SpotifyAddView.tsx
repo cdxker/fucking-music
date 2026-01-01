@@ -30,7 +30,9 @@ function SpotifyAddContent() {
             setLoading(true)
             setError(null)
             try {
-                const res = await fetch(`/api/spotify/playlists?limit=${ITEMS_PER_PAGE}&offset=${offset}`)
+                const res = await fetch(
+                    `/api/spotify/playlists?limit=${ITEMS_PER_PAGE}&offset=${offset}`
+                )
                 if (!res.ok) {
                     throw new Error("Failed to fetch playlists")
                 }
@@ -162,10 +164,14 @@ function SpotifyAddContent() {
                                             </div>
                                         )}
                                     </div>
-                                    <h3 className={cn(
-                                        "font-medium truncate transition-colors",
-                                        isSelected ? "text-green-400" : "group-hover:text-green-400"
-                                    )}>
+                                    <h3
+                                        className={cn(
+                                            "font-medium truncate transition-colors",
+                                            isSelected
+                                                ? "text-green-400"
+                                                : "group-hover:text-green-400"
+                                        )}
+                                    >
                                         {playlist.name}
                                     </h3>
                                     <p className="text-sm text-white/50 truncate">

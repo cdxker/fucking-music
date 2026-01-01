@@ -5,12 +5,8 @@ import SideTrack from "./SideTrack"
 import { usePlayer } from "@/hooks/PlayerContext"
 import { cn, formatTime } from "@/lib/utils"
 import { Pause, Play } from "lucide-react"
-import { AddMusicButton } from "./AddMusicButton"
 import { TimeSlider } from "./TimeSlider"
 import PlayerLayout from "./PlayerLayout"
-import { SpoitfyIcon } from "./icons"
-import { Button } from "./ui/button"
-import { SpotifyStatus } from "./SpotifyStatus"
 
 function MusicView() {
     const {
@@ -136,12 +132,8 @@ function PlayerView() {
     return (
         <PlayerLayout>
             <div className="flex flex-col min-h-screen px-5 pt-8 pb-12 bg-[#0B0B0B] text-white">
-                <SpotifyStatus />
                 {playlists.length > 0 && <MusicView />}
                 {playlists.length === 0 && <div></div>}
-                <div className="flex items-center justify-center w-full text-sm">
-                    <AddMusicButton />
-                </div>
                 <TimeSlider expanded={false} />
             </div>
         </PlayerLayout>
