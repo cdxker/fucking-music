@@ -11,6 +11,7 @@ import type { FuckingPlaylist, FuckingTrack, PlaylistId, TrackId } from "@/share
 import type { SpotifyPlayerInstance } from "@/shared/spotify-sdk"
 import { musicCache } from "@/lib/musicCache"
 import { db } from "@/lib/store"
+import posthog from "posthog-js"
 
 export type SetPlaylistAndTracksParams = {
     playlistId: PlaylistId
@@ -284,20 +285,36 @@ export function PlayerProvider({
         // For Spotify, use the Spotify player's togglePlay
         if (playlist?.source === "spotify") {
             spotifyPlayerRef.current?.togglePlay()
-            setIsPlaying(!isPlaying)
+            const newIsPlaying = !isPlaying
+            setIsPlaying(newIsPlaying)
+            if (newIsPlaying && currentTrack) {
+                posthog.capture("music_played", {
+                    source: playlist.source,
+                    track_name: currentTrack.name,
+                    playlist_name: playlist.name,
+                })
+            }
             return
         }
 
         const audio = audioRef.current
         if (!audio) return
 
+        const newIsPlaying = !isPlaying
         if (isPlaying) {
             audio.pause()
         } else {
             audio.play()
+            if (currentTrack && playlist) {
+                posthog.capture("music_played", {
+                    source: playlist.source,
+                    track_name: currentTrack.name,
+                    playlist_name: playlist.name,
+                })
+            }
         }
-        setIsPlaying(!isPlaying)
-    }, [isPlaying, playlist])
+        setIsPlaying(newIsPlaying)
+    }, [isPlaying, playlist, currentTrack])
 
     const handleSeek = useCallback(
         (value: number) => {
@@ -323,10 +340,18 @@ export function PlayerProvider({
             setCurrentTimeMs(0)
             setIsPlaying(true)
 
+            const selectedTrack = tracks[index]
+            if (selectedTrack && playlist) {
+                posthog.capture("music_played", {
+                    source: playlist.source,
+                    track_name: selectedTrack.name,
+                    playlist_name: playlist.name,
+                })
+            }
+
             // For Spotify, explicitly trigger playback of the selected track
             if (playlist?.source === "spotify" && spotifyDeviceId) {
                 const playlistSpotifyId = playlist.id.replace("play-spotify-", "")
-                const selectedTrack = tracks[index]
                 if (selectedTrack) {
                     const trackSpotifyId = selectedTrack.id.replace("track-spotify-", "")
                     await fetch("/api/spotify/play", {

@@ -5,6 +5,7 @@ import { musicCache } from "@/lib/musicCache"
 import { shuffleAssociations } from "@/lib/associations"
 import { PlayerProvider } from "@/hooks/PlayerContext"
 import { SpotifyProvider } from "@/hooks/SpotifyContext"
+import posthog from "posthog-js"
 
 export default function PlayerLayout({ children }: { children: ReactNode }) {
     const [initData, setInitData] = useState<{
@@ -14,6 +15,23 @@ export default function PlayerLayout({ children }: { children: ReactNode }) {
         initialTimeMs: number
     } | null>(null)
     const [initializing, setInitializing] = useState(true)
+
+    useEffect(() => {
+        const apiKey = import.meta.env.PUBLIC_POSTHOG_API_KEY
+        const host = import.meta.env.PUBLIC_POSTHOG_HOST
+
+        if (apiKey && host && typeof window !== "undefined") {
+            posthog.init(apiKey, {
+                api_host: host,
+                session_recording: {
+                    maskAllInputs: false,
+                    maskTextSelector: "[data-private]",
+                },
+                capture_pageview: true,
+                capture_pageleave: true,
+            })
+        }
+    }, [])
 
     useEffect(() => {
         const init = async () => {

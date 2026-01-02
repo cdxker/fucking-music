@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react"
 import PlayerLayout from "./PlayerLayout"
 import type {
-    SpotifyPlaylist,
+    FuckingPlaylist,
     SpotifyPlaylistsResponse,
-    SpotifyPlaylistTracksResponse,
+    RawSpotifyPlaylistTracksResponse,
     SpotifyTrack,
     SpotifyUserProfile,
 } from "@/shared/types"
@@ -25,8 +25,8 @@ function formatDuration(ms: number): string {
 
 const SpotifyView = () => {
     const [user, setUser] = useState<SpotifyUserProfile | null>(null)
-    const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([])
-    const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null)
+    const [playlists, setPlaylists] = useState<FuckingPlaylist[]>([])
+    const [selectedPlaylist, setSelectedPlaylist] = useState<FuckingPlaylist | null>(null)
     const [tracks, setTracks] = useState<SpotifyTrack[]>([])
     const [loading, setLoading] = useState(true)
     const [tracksLoading, setTracksLoading] = useState(false)
@@ -133,7 +133,7 @@ const SpotifyView = () => {
         }
     }, [])
 
-    const handlePlaylistClick = async (playlist: SpotifyPlaylist) => {
+    const handlePlaylistClick = async (playlist: FuckingPlaylist) => {
         setSelectedPlaylist(playlist)
         setTracksLoading(true)
         setTracks([])
@@ -143,7 +143,7 @@ const SpotifyView = () => {
             const res = await fetch(`/api/spotify/playlists/${playlist.id}/tracks?limit=50`)
             if (!res.ok) throw new Error("Failed to fetch tracks")
 
-            const data: SpotifyPlaylistTracksResponse = await res.json()
+            const data: RawSpotifyPlaylistTracksResponse = await res.json()
             const trackList = data.items
                 .filter((item) => item.track && !item.track.is_local)
                 .map((item) => item.track as SpotifyTrack)
@@ -158,12 +158,13 @@ const SpotifyView = () => {
     const handleTrackClick = async (track: SpotifyTrack) => {
         if (!selectedPlaylist || !deviceIdRef.current) return
         try {
+            const playlistSpotifyId = selectedPlaylist.id.replace("play-spotify-", "")
             await fetch("/api/spotify/play", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     device_id: deviceIdRef.current,
-                    context_uri: selectedPlaylist.uri,
+                    context_uri: `spotify:playlist:${playlistSpotifyId}`,
                     offset: { uri: track.uri },
                 }),
             })
@@ -210,18 +211,16 @@ const SpotifyView = () => {
                                 >
                                     &larr; Back
                                 </button>
-                                {selectedPlaylist.images?.[0]?.url && (
+                                {selectedPlaylist.track_cover_uri && (
                                     <img
-                                        src={selectedPlaylist.images[0].url}
+                                        src={selectedPlaylist.track_cover_uri}
                                         alt={selectedPlaylist.name}
                                         className="w-16 h-16 rounded"
                                     />
                                 )}
                                 <div>
                                     <h1 className="text-2xl font-bold">{selectedPlaylist.name}</h1>
-                                    <p className="text-white/50">
-                                        {selectedPlaylist.tracks.total} tracks
-                                    </p>
+                                    <p className="text-white/50">{tracks.length} tracks</p>
                                 </div>
                             </>
                         ) : (
@@ -304,9 +303,9 @@ const SpotifyView = () => {
                                     className="group bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-colors text-left"
                                 >
                                     <div className="aspect-square mb-4 bg-white/10 rounded overflow-hidden">
-                                        {playlist.images?.[0]?.url ? (
+                                        {playlist.track_cover_uri ? (
                                             <img
-                                                src={playlist.images[0].url}
+                                                src={playlist.track_cover_uri}
                                                 alt={playlist.name}
                                                 className="w-full h-full object-cover"
                                             />
@@ -320,7 +319,7 @@ const SpotifyView = () => {
                                         {playlist.name}
                                     </h3>
                                     <p className="text-sm text-white/50 truncate">
-                                        {playlist.tracks.total} tracks
+                                        {playlist.artists.join(", ")}
                                     </p>
                                 </button>
                             ))}

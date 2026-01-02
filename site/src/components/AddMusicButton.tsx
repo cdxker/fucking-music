@@ -3,6 +3,7 @@ import { Button } from "./ui/button"
 import { usePlayer } from "@/hooks/PlayerContext"
 import { db } from "@/lib/store"
 import { Check, X } from "lucide-react"
+import posthog from "posthog-js"
 
 export const AddBandcampButton = ({ text }: { text?: string }) => {
     const [showInput, setShowInput] = useState(false)
@@ -34,6 +35,12 @@ export const AddBandcampButton = ({ text }: { text?: string }) => {
 
             db.insertPlaylist(data.playlist)
             db.insertTracks(data.tracks, data.playlist.id)
+
+            posthog.capture("music_added", {
+                source: data.playlist.source,
+                playlist_name: data.playlist.name,
+                track_count: data.tracks.length,
+            })
 
             setPlaylistAndTracks({
                 playlistId: data.playlist.id,

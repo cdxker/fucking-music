@@ -5,6 +5,7 @@ import { Button } from "./ui/button"
 import type { FuckingPlaylist, SpotifyPlaylistsResponse } from "@/shared/types"
 import { cn } from "@/lib/utils"
 import { Check } from "lucide-react"
+import posthog from "posthog-js"
 
 const ITEMS_PER_PAGE = 20
 
@@ -66,6 +67,12 @@ export function SpotifyAddContent({ onBack }: { onBack?: () => void }) {
             for (const playlist of playlistsToAdd) {
                 await addSpotifyPlaylist(playlist)
             }
+
+            posthog.capture("music_added", {
+                source: "spotify",
+                playlist_count: playlistsToAdd.length,
+            })
+
             onBack ? onBack() : (window.location.href = "/player")
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to add playlists")
@@ -90,7 +97,7 @@ export function SpotifyAddContent({ onBack }: { onBack?: () => void }) {
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => onBack ? onBack() : (window.location.href = "/player")}
+                            onClick={() => (onBack ? onBack() : (window.location.href = "/player"))}
                             className="text-white/50 hover:text-white transition-colors"
                         >
                             &larr; Back
@@ -150,9 +157,7 @@ export function SpotifyAddContent({ onBack }: { onBack?: () => void }) {
                                 <h3
                                     className={cn(
                                         "font-medium truncate transition-colors",
-                                        isSelected
-                                            ? "text-green-400"
-                                            : "group-hover:text-green-400"
+                                        isSelected ? "text-green-400" : "group-hover:text-green-400"
                                     )}
                                 >
                                     {playlist.name}
